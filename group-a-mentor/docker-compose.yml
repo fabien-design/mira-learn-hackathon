@@ -24,7 +24,21 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      # auto-import server config
+      - ./servers.json:/pgadmin4/servers.json
 volumes:
+  pgadmin_data:
   pg_data:
     name: pg-hackathon-group-a
