@@ -47,10 +47,15 @@ def create_app() -> FastAPI:
     )
 
     # CORS (hackathon : permissif, sera restreint en V1 prod via edge-gateway)
+    # WHY : en dev, ServerErrorMiddleware (outermost Starlette) produit des 500
+    # sans headers CORS, ce qui bloque la réponse côté browser. allow_origins=["*"]
+    # garantit que même ces réponses passent. En prod, on revient aux origines explicites.
+    _cors_origins = ["*"] if settings.ENVIRONMENT == "development" else settings.CORS_ALLOW_ORIGINS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ALLOW_ORIGINS,
-        allow_credentials=True,
+        allow_origins=_cors_origins,
+        # allow_credentials ne peut pas être True avec allow_origins=["*"] (spec CORS)
+        allow_credentials=settings.ENVIRONMENT != "development",
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -61,6 +66,19 @@ def create_app() -> FastAPI:
         return JSONResponse(
             status_code=exc.status_code,
             content=error_response(message=exc.message, data=exc.data),
+        )
+
+    # WHY : ServerErrorMiddleware est plus externe que CORSMiddleware dans la
+    # stack Starlette — les exceptions non catchées produisent des 500 sans
+    # header CORS. Ce handler garantit que TOUTES les erreurs passent par
+    # ExceptionMiddleware → CORSMiddleware avant d'être renvoyées.
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+        message = str(exc) if settings.ENVIRONMENT == "development" else "Internal server error"
+        return JSONResponse(
+            status_code=500,
+            content=error_response(message=message),
         )
 
     # Lifespan

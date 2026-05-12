@@ -36,6 +36,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -52,7 +53,7 @@ class IDMixin:
     """Mixin : colonne id UUID v4 PK."""
 
     id: Mapped[str] = mapped_column(
-        String(36),
+        PGUUID(as_uuid=False),
         primary_key=True,
         default=_generate_uuid,
     )
