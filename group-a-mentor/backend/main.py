@@ -19,7 +19,7 @@ MIGRATION HINT (post-hackathon, backbone Hello Mira) :
 """
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -27,7 +27,7 @@ from app.api.v1.router import router as v1_router
 from app.core.config import settings
 from app.core.db import close_db, init_db
 from app.core.exceptions import AppException
-from app.core.responses import error_response
+from app.core.responses import error_response, fail_response
 
 logging.basicConfig(
     level=settings.LOG_LEVEL,
@@ -62,6 +62,15 @@ def create_app() -> FastAPI:
             status_code=exc.status_code,
             content=error_response(message=exc.message, data=exc.data),
         )
+
+    # HTTPException → JSend (couvre 401/403 auth + 404/409 métier)
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        if exc.status_code >= 500:
+            content = error_response(message=str(exc.detail))
+        else:
+            content = fail_response(data=None, message=str(exc.detail))
+        return JSONResponse(status_code=exc.status_code, content=content)
 
     # Lifespan
     @app.on_event("startup")
