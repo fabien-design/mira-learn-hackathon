@@ -17,14 +17,14 @@ from app.schemas.mira_class import (
     RevenueSimulationRequest,
     RevenueSimulationResult,
 )
-from app.services.mentor_application_service import get_active_application
+from app.services.mentor_application_service import get_my_application
 
 router = APIRouter(prefix="/mentors/applications/me/classes", tags=["mira-classes"])
 revenue_router = APIRouter(prefix="/mentors", tags=["mira-classes"])
 
 
 async def _get_application_or_404(db: AsyncSession, user_id: str):
-    app = await get_active_application(db, user_id)
+    app = await get_my_application(db, user_id)
     if not app:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aucune candidature en cours")
     return app

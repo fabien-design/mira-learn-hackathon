@@ -15,6 +15,13 @@ class MentorApplicationStep1(BaseModel):
     prior_masterclasses_count: int = Field(default=0, ge=0)
 
 
+class MentorApplicationReviewDecision(BaseModel):
+    """Body pour POST /v1/admin/mentors/applications/{id}/review — Décision admin."""
+
+    decision: Literal["validated", "rejected"]
+    decision_reason: Optional[str] = Field(None, max_length=2000)
+
+
 class MentorApplicationRead(BaseModel):
     """Réponse lecture — vue authentifiée complète de la candidature."""
 

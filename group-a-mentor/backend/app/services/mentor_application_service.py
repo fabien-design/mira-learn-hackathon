@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
 
 from app.core.exceptions import ConflictError, NotFoundError
 from app.models.mentor_application import MentorApplication
@@ -66,6 +67,35 @@ async def update_step1(
     instance.last_name = body.last_name
     instance.nomad_since_year = body.nomad_since_year
     instance.prior_masterclasses_count = body.prior_masterclasses_count
+    await db.flush()
+    await db.refresh(instance)
+    return instance
+
+
+async def review_application(
+    db: AsyncSession,
+    instance: MentorApplication,
+    decision_body,
+    admin_user_id: str,
+) -> MentorApplication:
+    """Valide ou rejette une candidature en status='submitted' ou 'in_review'."""
+    if instance.status not in ["submitted", "in_review"]:
+        raise ConflictError(
+            f"Impossible de reviewer une candidature en status '{instance.status}'",
+            data={"status": instance.status},
+        )
+
+    if decision_body.decision == "validated":
+        instance.status = "validated"
+    elif decision_body.decision == "rejected":
+        instance.status = "rejected"
+        instance.decision_reason = decision_body.decision_reason
+    
+    instance.reviewed_at = datetime.now(timezone.utc)
+    instance.reviewed_by_admin_id = admin_user_id
+    if decision_body.decision_reason and decision_body.decision == "rejected":
+        instance.decision_reason = decision_body.decision_reason
+    
     await db.flush()
     await db.refresh(instance)
     return instance
