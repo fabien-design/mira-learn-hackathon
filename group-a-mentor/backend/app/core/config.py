@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str
     OPENROUTER_DEFAULT_MODEL: str = "anthropic/claude-3.5-haiku"
 
+    # MiraClass — Simulation revenu
+    PLATFORM_FEE_RATIO: float = 0.25  # 25% de frais de plateforme sur le revenu brut
+
     # CORS (en hackathon : on autorise tout localhost)
     CORS_ALLOW_ORIGINS: list[str] = Field(default_factory=lambda: [
         "http://localhost:3000",

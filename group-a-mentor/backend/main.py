@@ -19,7 +19,7 @@ MIGRATION HINT (post-hackathon, backbone Hello Mira) :
 """
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -27,7 +27,7 @@ from app.api.v1.router import router as v1_router
 from app.core.config import settings
 from app.core.db import close_db, init_db
 from app.core.exceptions import AppException
-from app.core.responses import error_response
+from app.core.responses import error_response, fail_response
 
 logging.basicConfig(
     level=settings.LOG_LEVEL,
