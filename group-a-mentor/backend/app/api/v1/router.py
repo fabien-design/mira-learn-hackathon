@@ -7,6 +7,9 @@ from app.api.v1.endpoints.mentor_applications import router as applications_rout
 from app.api.v1.endpoints.mentors import router as mentors_router
 from app.api.v1.endpoints.mira_classes import router as classes_router, revenue_router
 from app.api.v1.endpoints.admin_applications import router as admin_router
+from app.api.v1.endpoints.application_skills import router as application_skills_router
+from app.api.v1.endpoints.cv_imports import router as cv_imports_router
+from app.api.v1.endpoints.ai_suggestions import router as ai_suggestions_router
 
 router = APIRouter()
 
@@ -26,7 +29,6 @@ router.include_router(mentors_router)
 router.include_router(classes_router)
 router.include_router(revenue_router)
 router.include_router(admin_router)
-
-# À ajouter quand T2 sera fait :
-# router.include_router(cv_imports_router)
-# router.include_router(class_suggestions_router)
+router.include_router(application_skills_router)
+router.include_router(cv_imports_router)
+router.include_router(ai_suggestions_router)

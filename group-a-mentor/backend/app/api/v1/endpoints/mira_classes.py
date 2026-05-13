@@ -37,11 +37,12 @@ async def create_class(
     db: AsyncSession = Depends(get_db),
 ):
     app = await _get_application_or_404(db, user.user_id)
+    payload = body.model_dump(exclude={"application_id"})
     mc = MiraClass(
         application_id=app.id,
         mentor_user_id=user.user_id,
         status="draft",
-        **body.model_dump(),
+        **payload,
     )
     db.add(mc)
     await db.commit()
