@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
+import { AdminNav } from "@/components/mira/AdminNav";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function AuthenticatedLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -24,5 +23,10 @@ export default function AuthenticatedLayout({
   }
   if (!user) return null;
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-background">
+      <AdminNav />
+      <main className="mx-auto w-full max-w-[1080px] px-6 py-10 md:px-8">{children}</main>
+    </div>
+  );
 }

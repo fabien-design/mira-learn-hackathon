@@ -1,63 +1,39 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-/**
- * Page d'accueil — Server Component.
- *
- * Hello world du template. À remplacer par la vraie landing page du groupe :
- *   - Group A : présentation Mira Mentor + CTA candidature + annuaire mentors
- *   - Group B : page de connexion mentor + redirect dashboard si auth
- *   - Group C : catalogue Mira Class + filtres + hero
- *
- * MIGRATION HINT (post-hackathon) :
- *   En prod Hello Mira, le path est `/[locale]/` avec next-intl (FR par défaut,
- *   plus EN/ES). Voir book-web pattern.
- */
-export default function Home() {
+import { Eyebrow } from "@/components/mira/Eyebrow";
+import { Footer } from "@/components/mira/Footer";
+import { MiraButton } from "@/components/mira/MiraButton";
+import { PublicNav } from "@/components/mira/PublicNav";
+
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="max-w-2xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Bienvenue sur le template Hackathon Mira Learn
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Frontend Next.js prêt à être customisé pour ton groupe.
-        </p>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/login"
-            className="rounded-md bg-[var(--primary)] px-6 py-3 text-white hover:opacity-90"
-          >
-            Se connecter
-          </Link>
-          <Link
-            href="/me"
-            className="rounded-md border border-gray-300 px-6 py-3 hover:bg-gray-50"
-          >
-            Mon profil (auth)
-          </Link>
+    <div className="min-h-screen bg-background">
+      <PublicNav />
+      <main className="mx-auto w-full max-w-[1320px] px-6 pb-24 pt-24 md:px-8">
+        <div className="max-w-3xl">
+          <Eyebrow>Mira Learn · pour les digital nomads francophones</Eyebrow>
+          <h1 className="mt-4 font-serif text-[clamp(2.75rem,6vw,4.5rem)] font-medium leading-[1.05] tracking-tight text-charcoal">
+            Transmets ton savoir, <span className="font-serif-italic">finance tes voyages.</span>
+          </h1>
+          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-muted-foreground">
+            Mira Learn rassemble les digital nomads qui ont une expertise concrète et veulent
+            la transmettre en petit groupe. Mira AI t'aide à structurer ta première
+            masterclass en moins de 15 minutes.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/mentors/apply/step-1">
+              <MiraButton trailingIcon={<ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />}>
+                Devenir mentor
+              </MiraButton>
+            </Link>
+            <Link href="/mentors">
+              <MiraButton variant="secondary">Voir les mentors</MiraButton>
+            </Link>
+          </div>
         </div>
-
-        <div className="mt-12 rounded-lg border border-gray-200 bg-gray-50 p-6 text-left text-sm">
-          <h2 className="font-semibold">Prochaines étapes</h2>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-gray-700">
-            <li>
-              Renseigner <code>.env.local</code> (Supabase + URL backend)
-            </li>
-            <li>
-              Lancer le backend FastAPI sur <code>:8000</code>
-            </li>
-            <li>
-              Construire les pages selon les contrats{" "}
-              <code>hackathon/contracts/group-X-xxx/</code>
-            </li>
-            <li>
-              Consulter le <code>README.md</code> pour les conventions et la
-              structure
-            </li>
-          </ul>
-        </div>
-      </div>
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }
