@@ -50,6 +50,14 @@
   --border: var(--color-border);
 }
 
+/* WHY: Tailwind v4 changed button cursor to `default` (browser spec). Restore pointer for all interactive elements. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);

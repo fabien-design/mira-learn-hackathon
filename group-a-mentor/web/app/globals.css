@@ -175,6 +175,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* WHY: Tailwind v4 changed button cursor to `default` (browser spec). Restore pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
   html {
     color-scheme: light;
   }
