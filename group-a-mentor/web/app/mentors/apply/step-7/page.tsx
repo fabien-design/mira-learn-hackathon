@@ -43,7 +43,7 @@ export default function Step7Page() {
           router.replace("/mentors/apply/step-1");
           return;
         }
-        if (a.status !== "draft") {
+        if (!["draft", "submitted"].includes(a.status)) {
           router.replace("/me/application");
           return;
         }

@@ -32,7 +32,7 @@ async def set_all(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Skills non modifiables (status='{app.status}')",
             data={"status": app.status},
@@ -91,7 +91,7 @@ async def add_one(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Skills non modifiables (status='{app.status}')",
             data={"status": app.status},
@@ -135,7 +135,7 @@ async def remove_one(db: AsyncSession, user_id: str, skill_id: str) -> None:
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Skills non modifiables (status='{app.status}')",
             data={"status": app.status},

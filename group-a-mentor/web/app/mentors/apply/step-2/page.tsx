@@ -30,7 +30,7 @@ export default function Step2Page() {
           router.replace("/mentors/apply/step-1");
           return;
         }
-        if (data.status !== "draft") {
+        if (!["draft", "submitted"].includes(data.status)) {
           router.replace("/me/application");
           return;
         }

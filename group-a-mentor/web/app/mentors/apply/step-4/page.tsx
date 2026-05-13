@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { Pencil, RefreshCw, Sparkles } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
 import { ErrorBanner } from "@/components/wizard/ErrorBanner";
+import { Eyebrow } from "@/components/mira/Eyebrow";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { MiraCard } from "@/components/mira/MiraCard";
 import { SuggestionCard } from "@/components/mira/SuggestionCard";
@@ -19,6 +20,7 @@ import type { ClassSuggestion, MentorApplication, MiraClass, Skill } from "@/typ
 export default function Step4Page() {
   const router = useRouter();
   const [application, setApplication] = useState<MentorApplication | null>(null);
+  const [existingClasses, setExistingClasses] = useState<MiraClass[]>([]);
   const [suggestions, setSuggestions] = useState<ClassSuggestion[]>([]);
   const [skillsById, setSkillsById] = useState<Map<string, Skill>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -30,21 +32,25 @@ export default function Step4Page() {
   useEffect(() => {
     Promise.all([
       apiClient.get<MentorApplication | null>("/v1/mentors/applications/me"),
+      apiClient.get<MiraClass[]>("/v1/mentors/applications/me/classes"),
       apiClient.get<ClassSuggestion[]>(
         "/v1/mentors/applications/me/class-suggestions?status=proposed",
       ),
       apiClient.get<Skill[]>("/v1/skills"),
     ])
-      .then(([app, sugg, skills]) => {
+      .then(([app, classes, sugg, skills]) => {
         if (!app) {
           router.replace("/mentors/apply/step-1");
           return;
         }
-        if (app.status !== "draft") {
+        if (!["draft", "submitted"].includes(app.status)) {
           router.replace("/me/application");
           return;
         }
         setApplication(app);
+        setExistingClasses(
+          classes.filter((c) => c.status === "draft" || c.status === "submitted"),
+        );
         setSuggestions(sugg);
         setSkillsById(new Map(skills.map((s) => [s.id, s])));
       })
@@ -116,16 +122,12 @@ export default function Step4Page() {
     }
   }
 
-  async function continueExisting() {
-    try {
-      const classes = await apiClient.get<MiraClass[]>(
-        "/v1/mentors/applications/me/classes",
-      );
-      const draft = classes.find((c) => c.status === "draft");
-      if (draft) router.push(`/mentors/apply/step-5?class_id=${draft.id}`);
-      else setError("Adopte une suggestion ou crée ta propre Mira Class avant de continuer.");
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Erreur réseau.");
+  function continueExisting() {
+    if (existingClasses.length > 0) {
+      // Classes déjà configurées — on saute step-5 et step-6, on va directement au récap
+      router.push("/mentors/apply/step-7");
+    } else {
+      setError("Adopte une suggestion ou crée ta propre Mira Class avant de continuer.");
     }
   }
 
@@ -141,6 +143,37 @@ export default function Step4Page() {
         subtitle="D'après tes skills et la demande des nomades, voici 3 sujets de Mira Class à fort potentiel."
       />
       <ErrorBanner message={error} />
+
+      {/* Classes déjà créées — affichées en priorité si la candidature est en submitted */}
+      {!loading && existingClasses.length > 0 && (
+        <section className="mb-8">
+          <Eyebrow className="mb-3">Tes masterclasses</Eyebrow>
+          <div className="flex flex-col gap-3">
+            {existingClasses.map((c) => (
+              <MiraCard
+                key={c.id}
+                className="flex items-center justify-between gap-4 py-4"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-charcoal">{c.title}</p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    {c.total_hours_collective}h coll. · {c.total_hours_individual}h indiv.
+                    {c.format_envisaged ? ` · ${c.format_envisaged}` : ""}
+                  </p>
+                </div>
+                <MiraButton
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />}
+                  onClick={() => router.push(`/mentors/apply/step-5?class_id=${c.id}`)}
+                >
+                  Modifier
+                </MiraButton>
+              </MiraCard>
+            ))}
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <div className="grid gap-4 md:grid-cols-3">

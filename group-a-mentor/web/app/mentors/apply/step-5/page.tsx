@@ -83,7 +83,7 @@ function Step5Inner() {
       apiClient.get<MiraClass>(`/v1/mentors/applications/me/classes/${classId}`),
     ])
       .then(([app, cls]) => {
-        if (!app || app.status !== "draft") {
+        if (!app || !["draft", "submitted"].includes(app.status)) {
           router.replace("/me/application");
           return;
         }

@@ -150,7 +150,7 @@ async def generate(
     application = await get_my_application(db, user_id)
     if not application:
         raise NotFoundError("MentorApplication", user_id)
-    if application.status != "draft":
+    if application.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Suggestions non générables (status='{application.status}')",
             data={"status": application.status},
@@ -353,7 +353,7 @@ async def adopt(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Adoption impossible (status='{app.status}')",
             data={"status": app.status},
@@ -420,7 +420,7 @@ async def reject(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Rejet impossible (status='{app.status}')",
             data={"status": app.status},

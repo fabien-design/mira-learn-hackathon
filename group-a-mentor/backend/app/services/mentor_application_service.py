@@ -102,7 +102,7 @@ async def update_profile(
     instance = await get_my_application(db, user_id)
     if not instance:
         raise NotFoundError("MentorApplication", user_id)
-    if instance.status != "draft":
+    if instance.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Candidature non modifiable (status='{instance.status}')",
             data={"status": instance.status},
@@ -121,11 +121,14 @@ async def update_profile(
 
 
 async def submit_application(db: AsyncSession, user_id: str) -> MentorApplication:
-    """Étape 7 — application + toutes ses mira_class draft passent en submitted."""
+    """Étape 7 — application + toutes ses mira_class draft/submitted passent en submitted.
+
+    Autorisé depuis draft (première soumission) ou submitted (re-soumission après modification).
+    """
     instance = await get_my_application(db, user_id)
     if not instance:
         raise NotFoundError("MentorApplication", user_id)
-    if instance.status != "draft":
+    if instance.status not in ("draft", "submitted"):
         raise ConflictError(
             f"Soumission impossible (status='{instance.status}')",
             data={"status": instance.status},
@@ -136,13 +139,13 @@ async def submit_application(db: AsyncSession, user_id: str) -> MentorApplicatio
 
     classes_stmt = select(MiraClass).where(
         MiraClass.application_id == instance.id,
-        MiraClass.status == "draft",
+        MiraClass.status.in_(["draft", "submitted"]),
         MiraClass.deleted_at.is_(None),
     )
     classes = list((await db.execute(classes_stmt)).scalars().all())
     if not classes:
         raise ValidationError(
-            "Au moins une mira_class draft est requise pour soumettre.",
+            "Au moins une mira_class est requise pour soumettre.",
             field="classes",
         )
 

@@ -107,8 +107,8 @@ async def update_class(
     mc = result.scalar_one_or_none()
     if not mc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classe introuvable")
-    if mc.status != "draft":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Classe non éditable (status != draft)")
+    if mc.status not in ("draft", "submitted"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Classe non éditable (status != draft/submitted)")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(mc, field, value)
     await db.commit()
@@ -133,8 +133,8 @@ async def delete_class(
     mc = result.scalar_one_or_none()
     if not mc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classe introuvable")
-    if mc.status != "draft":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Seules les classes draft peuvent être supprimées")
+    if mc.status not in ("draft", "submitted"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Seules les classes draft/submitted peuvent être supprimées")
     mc.deleted_at = datetime.now(timezone.utc)
     await db.commit()
     return success_response(None, message="Classe supprimée")

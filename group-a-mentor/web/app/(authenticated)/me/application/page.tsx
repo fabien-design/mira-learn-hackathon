@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Lock, RefreshCw } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/api-client";
 import { Eyebrow } from "@/components/mira/Eyebrow";
@@ -203,16 +203,26 @@ export default function MyApplicationPage() {
         <MiraCard className="mt-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-charcoal">Ton dossier</h3>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium",
-                isEditable
-                  ? "bg-success/[0.08] text-success"
-                  : "bg-warm-beige text-muted-foreground",
-              )}
-            >
-              {isEditable ? "✎ Éditable" : <><Lock className="h-3 w-3" /> Verrouillé · en examen</>}
-            </span>
+            {isEditable ? (
+              <Link
+                href={app.status === "draft" ? "/mentors/apply/step-1" : "/mentors/apply/step-3"}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium transition-opacity hover:opacity-70",
+                  "bg-success/[0.08] text-success",
+                )}
+              >
+                ✎ Éditable
+              </Link>
+            ) : (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium",
+                  "bg-warm-beige text-muted-foreground",
+                )}
+              >
+                <Lock className="h-3 w-3" /> Verrouillé · en examen ou validé
+              </span>
+            )}
           </div>
 
           <Eyebrow className="mt-5 mb-1">
@@ -229,13 +239,13 @@ export default function MyApplicationPage() {
           <SummaryRow
             label="Bio courte"
             value={app.bio.slice(0, 120) || "—"}
-            editable={isEditable && app.status === "draft"}
+            editable={isEditable}
             editHref="/mentors/apply/step-3"
           />
           <SummaryRow
             label="Transmission"
             value={app.transmission_pitch || "—"}
-            editable={isEditable && app.status === "draft"}
+            editable={isEditable}
             editHref="/mentors/apply/step-3"
           />
 
@@ -247,7 +257,7 @@ export default function MyApplicationPage() {
                   key={c.id}
                   label={c.title.slice(0, 24)}
                   value={`${c.total_hours_collective}h coll. · ${c.format_envisaged} · ${c.status}`}
-                  editable={isEditable && app.status === "draft"}
+                  editable={isEditable}
                   editHref={`/mentors/apply/step-5?class_id=${c.id}`}
                 />
               ))}
@@ -277,16 +287,6 @@ export default function MyApplicationPage() {
           <Link href="/mentors">
             <MiraButton variant="ghost">Voir l'annuaire</MiraButton>
           </Link>
-          {isEditable && app.status === "draft" && (
-            <Link href="/mentors/apply/step-1">
-              <MiraButton
-                variant="secondary"
-                leadingIcon={<RefreshCw className="h-3.5 w-3.5" strokeWidth={1.8} />}
-              >
-                Reprendre l'édition
-              </MiraButton>
-            </Link>
-          )}
         </div>
       </div>
     </div>
