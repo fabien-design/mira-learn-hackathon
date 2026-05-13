@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Link2, PenLine, Upload } from "lucide-react";
 
-import { ApiError, apiClient, getApiUrl } from "@/lib/api-client";
-import { getAccessToken } from "@/lib/supabase";
+import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
@@ -48,17 +47,7 @@ export default function Step2Page() {
     try {
       const form = new FormData();
       form.append("file", file);
-      const token = await getAccessToken();
-      const res = await fetch(`${getApiUrl()}/v1/mentors/applications/me/cv-imports`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: form,
-      });
-      const payload = await res.json();
-      if (!res.ok || payload.status !== "success") {
-        throw new ApiError(payload.message ?? "Upload échoué", res.status, payload.data);
-      }
-      const cv = payload.data as CVImport;
+      const cv = await apiClient.postForm<CVImport>("/v1/mentors/applications/me/cv-imports", form);
       router.push(`/mentors/apply/step-3?cv_import_id=${cv.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Upload échoué.");
