@@ -15,6 +15,12 @@ class SkillBase(BaseModel):
     popularity_score: int = Field(default=0, ge=0)
 
 
+class SkillCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    category: SkillCategory = "soft"
+    description: str = Field(default="", max_length=2000)
+
+
 class SkillRead(SkillBase):
     id: str
     created_at: datetime

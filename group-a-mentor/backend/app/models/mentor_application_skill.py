@@ -16,6 +16,7 @@ class MentorApplicationSkill(Base, IDMixin):
     )
     skill_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), nullable=False)
     level: Mapped[str] = mapped_column(String(32), nullable=False)
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     self_declared: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     validated_via_cv_import: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

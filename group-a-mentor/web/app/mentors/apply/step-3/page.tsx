@@ -21,6 +21,7 @@ import type {
   MentorApplication,
   ProfessionalExperience,
   Skill,
+  SkillLevel,
 } from "@/types/mentor";
 
 interface FormState {
@@ -101,6 +102,7 @@ function Step3Inner() {
           skills: (mySkills ?? []).map((s) => ({
             skill_id: s.skill_id,
             level: s.level,
+            is_primary: s.is_primary,
             validated_via_cv_import: s.validated_via_cv_import,
           })),
         });
@@ -169,40 +171,42 @@ function Step3Inner() {
     };
   }, [cvImportId]);
 
-  function applyExtractionToForm() {
-    if (!cv) return;
-    const exp = cv.extracted_experiences_raw ?? [];
-    const sk = cv.extracted_skills_raw ?? [];
-    const slugToId = new Map(skillsCatalogue.map((s) => [s.slug, s.id]));
-    const newSkills = sk
-      .map((s) => {
-        const id = slugToId.get(s.skill_slug);
-        if (!id) return null;
-        return { skill_id: id, level: s.level, validated_via_cv_import: true };
-      })
-      .filter((x): x is PickedSkill => !!x);
-    setForm((f) => ({
-      ...f,
-      journey: exp.length > 0 ? exp : f.journey,
-      skills: mergeSkills(f.skills, newSkills),
-    }));
-  }
-
   async function confirmCvValidation() {
     if (!cv || !cvImportId) return;
-    const slugToId = new Map(skillsCatalogue.map((s) => [s.slug, s.id]));
-    const validated_skills = (cv.extracted_skills_raw ?? []).filter((s) =>
-      slugToId.has(s.skill_slug),
-    );
     try {
+      // Send ALL extracted skills — backend creates unknown ones automatically
       await apiClient.patch(
         `/v1/mentors/applications/me/cv-imports/${cvImportId}/validate`,
         {
           validated_experiences: cv.extracted_experiences_raw ?? [],
-          validated_skills,
+          validated_skills: cv.extracted_skills_raw ?? [],
         },
       );
-      applyExtractionToForm();
+      // Re-fetch application (bio/social prefilled by backend) + catalogue + skills
+      const [updatedApp, updatedCatalogue, mySkills] = await Promise.all([
+        apiClient.get<MentorApplication | null>("/v1/mentors/applications/me"),
+        apiClient.get<Skill[]>("/v1/skills"),
+        apiClient.get<ApplicationSkill[]>("/v1/mentors/applications/me/skills"),
+      ]);
+      setApplication(updatedApp);
+      setSkillsCatalogue(updatedCatalogue);
+      setForm((f) => ({
+        ...f,
+        bio: updatedApp?.bio || f.bio,
+        linkedin_url: updatedApp?.linkedin_url || f.linkedin_url,
+        instagram_url: updatedApp?.instagram_url || f.instagram_url,
+        website_url: updatedApp?.website_url || f.website_url,
+        journey:
+          (cv.extracted_experiences_raw ?? []).length > 0
+            ? cv.extracted_experiences_raw!
+            : f.journey,
+        skills: (mySkills ?? []).map((s) => ({
+          skill_id: s.skill_id,
+          level: s.level as SkillLevel,
+          is_primary: s.is_primary,
+          validated_via_cv_import: s.validated_via_cv_import,
+        })),
+      }));
       router.replace("/mentors/apply/step-3");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Validation CV échouée.");
@@ -232,6 +236,7 @@ function Step3Inner() {
         skills: form.skills.map((s) => ({
           skill_id: s.skill_id,
           level: s.level,
+          is_primary: s.is_primary,
           self_declared: !s.validated_via_cv_import,
           validated_via_cv_import: s.validated_via_cv_import,
         })),
@@ -379,6 +384,16 @@ function Step3Inner() {
             catalogue={skillsCatalogue}
             value={form.skills}
             onChange={(skills) => setForm({ ...form, skills })}
+            onSkillCreated={(skill) =>
+              setSkillsCatalogue((prev) => [...prev, skill])
+            }
+            createSkill={async (name) => {
+              const skill = await apiClient.post<Skill>("/v1/skills", {
+                name,
+                category: "soft",
+              });
+              return skill;
+            }}
           />
         </div>
       </section>
@@ -394,8 +409,3 @@ function Step3Inner() {
   );
 }
 
-function mergeSkills(current: PickedSkill[], incoming: PickedSkill[]): PickedSkill[] {
-  const byId = new Map(current.map((s) => [s.skill_id, s]));
-  for (const s of incoming) byId.set(s.skill_id, s);
-  return Array.from(byId.values());
-}

@@ -30,10 +30,8 @@ from app.core.db import close_db, init_db
 from app.core.exceptions import AppException
 from app.core.responses import error_response, fail_response
 
-logging.basicConfig(
-    level=settings.LOG_LEVEL,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+
+logging.getLogger("app").setLevel(settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 

@@ -24,3 +24,6 @@ httpx>=0.26.0
 pypdf>=4.0.0
 python-multipart>=0.0.9
 python-slugify>=8.0.0
+
+# LLM — lib officielle Ollama (async, gestion host Windows)
+ollama>=0.4.0

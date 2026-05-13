@@ -74,6 +74,7 @@ async def set_all(
             application_id=app.id,
             skill_id=s.skill_id,
             level=s.level,
+            is_primary=s.is_primary,
             self_declared=s.self_declared,
             validated_via_cv_import=s.validated_via_cv_import,
         )
@@ -114,6 +115,7 @@ async def add_one(
     found = existing.scalar_one_or_none()
     if found:
         found.level = body.level
+        found.is_primary = body.is_primary
         found.self_declared = body.self_declared
         found.validated_via_cv_import = body.validated_via_cv_import
         await db.flush()
@@ -123,6 +125,7 @@ async def add_one(
         application_id=app.id,
         skill_id=body.skill_id,
         level=body.level,
+        is_primary=body.is_primary,
         self_declared=body.self_declared,
         validated_via_cv_import=body.validated_via_cv_import,
     )

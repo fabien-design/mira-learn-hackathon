@@ -1,7 +1,7 @@
 """Endpoints — Import CV (PDF / manual paste) + extraction IA."""
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,21 +85,16 @@ async def get_import(
 
 @router.post(
     "/{import_id}/extract",
-    status_code=status.HTTP_202_ACCEPTED,
-    summary="Déclencher l'extraction IA (asynchrone)",
+    status_code=status.HTTP_200_OK,
+    summary="Déclencher l'extraction IA (synchrone — attend le résultat LLM)",
 )
 async def extract_import(
     import_id: str,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user: AuthenticatedUser = Depends(require_auth),
 ):
-    """Flip status uploaded→extracting puis renvoie immédiatement.
-    Le travail LLM tourne en background ; le client poll GET pour suivre."""
-    instance = await cv_import_service.start_extract(db, user.user_id, import_id)
-    if instance.status == "extracting":
-        background_tasks.add_task(cv_import_service.run_extract_background, instance.id)
-    return success_response(_serialize(instance), message="Extraction lancée")
+    instance = await cv_import_service.extract_sync(db, user.user_id, import_id)
+    return success_response(_serialize(instance), message="Extraction terminée")
 
 
 @router.patch("/{import_id}/validate", summary="Valider les résultats IA")
