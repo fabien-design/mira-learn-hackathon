@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 import { MiraLogo } from "./Logo";
-import { MiraAvatar } from "./MiraAvatar";
+import { NavUserMenu } from "./NavUserMenu";
 
 const NAV_ITEMS = [
   { href: "/mentors", label: "Mentors" },
@@ -17,13 +16,7 @@ const NAV_ITEMS = [
 
 export function PublicNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user } = useAuth();
-
-  async function logout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
 
   return (
     <div className="sticky top-0 z-40 border-b border-black/5 bg-[color:var(--warm-beige)]/85 backdrop-blur-md">
@@ -67,15 +60,8 @@ export function PublicNav() {
             </Button>
           </Link>
           {user && (
-            <div className="ml-10 flex items-center gap-3">
-              <MiraAvatar name={user.email ?? user.id} size={32} />
-              <button
-                type="button"
-                onClick={logout}
-                className="text-sm font-medium text-muted-foreground hover:text-charcoal"
-              >
-                Déconnexion
-              </button>
+            <div className="ml-10">
+              <NavUserMenu email={user.email ?? user.id} />
             </div>
           )}
         </div>
