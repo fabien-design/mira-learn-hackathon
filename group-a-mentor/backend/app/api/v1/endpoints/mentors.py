@@ -9,7 +9,8 @@ from app.core.responses import success_response
 from app.models.mentor_profile import MentorProfile
 from app.models.mentor_profile_skill import MentorProfileSkill
 from app.models.mira_class import MiraClass
-from app.schemas.mentor_profile import MentorProfilePublic, MentorProfileRead, MentorProfileUpdate
+from app.models.skill import Skill
+from app.schemas.mentor_profile import MentorProfilePublic, MentorProfileRead, MentorProfileSkillPublic, MentorProfileUpdate
 
 router = APIRouter(prefix="/mentors", tags=["mentors"])
 
@@ -108,7 +109,30 @@ async def get_mentor_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     profile = result.scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mentor introuvable")
-    return success_response(MentorProfilePublic.model_validate(profile).model_dump())
+
+    skills_result = await db.execute(
+        select(MentorProfileSkill, Skill)
+        .join(Skill, Skill.id == MentorProfileSkill.skill_id)
+        .where(MentorProfileSkill.profile_id == profile.id)
+        .order_by(MentorProfileSkill.is_primary.desc(), MentorProfileSkill.display_order.asc())
+    )
+    skill_rows = skills_result.all()
+    skills = [
+        MentorProfileSkillPublic(
+            skill_id=mps.skill_id,
+            skill_name=s.name,
+            skill_slug=s.slug,
+            level=mps.level,
+            is_primary=mps.is_primary,
+            display_order=mps.display_order,
+            category=s.category,
+        ).model_dump()
+        for mps, s in skill_rows
+    ]
+
+    data = MentorProfilePublic.model_validate(profile).model_dump()
+    data["skills"] = skills
+    return success_response(data)
 
 
 @router.get("/{slug}/classes", response_model=dict)
