@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, IDMixin, SoftDeleteMixin, TimestampMixin
@@ -12,7 +12,9 @@ class MentorCVImport(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "mentor_cv_import"
 
     application_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("mentor_application.id", ondelete="CASCADE"), nullable=False
+        PGUUID(as_uuid=False),
+        ForeignKey("mentor_application.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     # Source

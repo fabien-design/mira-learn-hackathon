@@ -1,5 +1,6 @@
 """Modèle SQLAlchemy — table mentor_application_skill (skills du candidat)."""
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, IDMixin
@@ -9,9 +10,11 @@ class MentorApplicationSkill(Base, IDMixin):
     __tablename__ = "mentor_application_skill"
 
     application_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("mentor_application.id", ondelete="CASCADE"), nullable=False
+        PGUUID(as_uuid=False),
+        ForeignKey("mentor_application.id", ondelete="CASCADE"),
+        nullable=False,
     )
-    skill_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    skill_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), nullable=False)
     level: Mapped[str] = mapped_column(String(32), nullable=False)
     self_declared: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     validated_via_cv_import: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

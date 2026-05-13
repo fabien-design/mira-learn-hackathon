@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, IDMixin, SoftDeleteMixin, TimestampMixin
@@ -13,9 +13,11 @@ class MiraClass(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
 
     # Liens
     application_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("mentor_application.id", ondelete="SET NULL"), nullable=True
+        PGUUID(as_uuid=False),
+        ForeignKey("mentor_application.id", ondelete="SET NULL"),
+        nullable=True,
     )
-    mentor_user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    mentor_user_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), nullable=False)
 
     # Identité
     title: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -42,7 +44,7 @@ class MiraClass(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
 
     # IA tracking
     ai_assisted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    source_suggestion_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_suggestion_id: Mapped[str | None] = mapped_column(PGUUID(as_uuid=False), nullable=True)
 
     # Audit transitions
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
