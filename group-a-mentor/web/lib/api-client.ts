@@ -35,6 +35,11 @@ import { getAccessToken } from "@/lib/supabase";
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/** Base URL du backend FastAPI (utile pour les requêtes multipart custom). */
+export function getApiUrl(): string {
+  return API_URL;
+}
+
 /** Réponse JSend standard depuis le backend. */
 export type JSendResponse<T = unknown> = {
   status: "success" | "fail" | "error";
@@ -55,7 +60,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -102,5 +107,6 @@ export const apiClient = {
   get: <T = unknown>(path: string) => request<T>("GET", path),
   post: <T = unknown>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T = unknown>(path: string, body?: unknown) => request<T>("PATCH", path, body),
+  put: <T = unknown>(path: string, body?: unknown) => request<T>("PUT", path, body),
   delete: <T = unknown>(path: string) => request<T>("DELETE", path),
 };
