@@ -21,7 +21,7 @@ MIGRATION HINT (post-hackathon) :
 """
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -80,6 +80,12 @@ class Settings(BaseSettings):
         "http://localhost:8080",
         "http://localhost:8081",
     ])
+
+    @model_validator(mode="after")
+    def _check_openrouter_key(self) -> "Settings":
+        if self.LLM_PROVIDER == "openrouter" and not self.OPENROUTER_API_KEY:
+            raise ValueError("OPENROUTER_API_KEY must be set when LLM_PROVIDER=openrouter")
+        return self
 
     def supabase_jwks_url(self) -> str:
         """Construit l'URL JWKS Supabase si pas fournie explicitement."""

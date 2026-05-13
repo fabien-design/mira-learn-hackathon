@@ -112,7 +112,6 @@ class LLMClient:
                     data={
                         "provider": self.provider,
                         "provider_status": exc.response.status_code,
-                        "provider_body": body,
                     },
                 ) from exc
             except httpx.TimeoutException as exc:

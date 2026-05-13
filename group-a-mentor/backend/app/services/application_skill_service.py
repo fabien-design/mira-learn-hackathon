@@ -4,8 +4,9 @@ from __future__ import annotations
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.models.mentor_application_skill import MentorApplicationSkill
+from app.models.skill import Skill
 from app.schemas.mentor_application_skill import MentorApplicationSkillBase
 from app.services.mentor_application_service import get_my_application
 
@@ -43,6 +44,25 @@ async def set_all(
         )
     )
 
+    # Validate all skill_ids exist in catalogue (no DB FK — must check manually)
+    input_ids = list({s.skill_id for s in skills})
+    if input_ids:
+        valid_ids = set(
+            (
+                await db.execute(
+                    select(Skill.id).where(
+                        Skill.id.in_(input_ids),
+                        Skill.deleted_at.is_(None),
+                    )
+                )
+            ).scalars().all()
+        )
+        invalid = [sid for sid in input_ids if sid not in valid_ids]
+        if invalid:
+            raise ValidationError(
+                f"skill_id(s) inconnu(s) : {', '.join(invalid)}", field="skill_id"
+            )
+
     # Dédup côté entrée (la contrainte SQL UNIQUE le ferait sauter sinon)
     seen: set[str] = set()
     rows: list[MentorApplicationSkill] = []
@@ -76,6 +96,14 @@ async def add_one(
             f"Skills non modifiables (status='{app.status}')",
             data={"status": app.status},
         )
+
+    skill_exists = (
+        await db.execute(
+            select(Skill.id).where(Skill.id == body.skill_id, Skill.deleted_at.is_(None))
+        )
+    ).scalar_one_or_none()
+    if not skill_exists:
+        raise ValidationError(f"skill_id inconnu : {body.skill_id}", field="skill_id")
 
     existing = await db.execute(
         select(MentorApplicationSkill).where(

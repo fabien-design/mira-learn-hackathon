@@ -23,7 +23,6 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
@@ -108,10 +107,8 @@ def create_app() -> FastAPI:
         logger.info("Shutting down %s", settings.SERVICE_NAME)
         await close_db()
 
-    # Static uploads (CVs ingérés) — sert UPLOAD_DIR sous /uploads
     upload_dir = Path(settings.UPLOAD_DIR)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
     # Routes
     app.include_router(v1_router, prefix="/v1")

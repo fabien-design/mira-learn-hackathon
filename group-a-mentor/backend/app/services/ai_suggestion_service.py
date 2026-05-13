@@ -37,7 +37,7 @@ Génère {count} propositions de Mira Class CIBLEES qui :
 - exploitent au moins une skill déclarée par le candidat ;
 - répondent à au moins une opportunité du marché ;
 - sont DIFFERENTES entre elles (pas de doublons).
-
+{exclusion_block}
 Retourne UNIQUEMENT du JSON valide, structure exacte :
 {{
   "suggestions": [
@@ -163,6 +163,19 @@ async def generate(
             field="skills",
         )
 
+    # Load excluded suggestions to pass their titles to the LLM
+    excluded_titles: list[str] = []
+    if exclude_ids:
+        excluded_rows = (
+            await db.execute(
+                select(MiraClassAISuggestion).where(
+                    MiraClassAISuggestion.id.in_(exclude_ids),
+                    MiraClassAISuggestion.application_id == application.id,
+                )
+            )
+        ).scalars().all()
+        excluded_titles = [r.suggested_title for r in excluded_rows]
+
     declared_str = "\n".join(
         f"- {d['name']} (level={d['level']})" for d in ctx["declared"]
     ) or "(aucune)"
@@ -174,11 +187,21 @@ async def generate(
         f"- {s.id} : {s.name} ({s.category})" for s in ctx["catalogue"]
     )
 
+    if excluded_titles:
+        exclusion_block = (
+            "Ne re-propose PAS les sujets déjà suggérés :\n"
+            + "\n".join(f"- {t}" for t in excluded_titles)
+            + "\n\n"
+        )
+    else:
+        exclusion_block = ""
+
     prompt = _PROMPT.format(
         declared=declared_str,
         gaps=gaps_str,
         count=count,
         catalogue=catalogue_str,
+        exclusion_block=exclusion_block,
     )
 
     try:
@@ -244,15 +267,29 @@ async def generate(
             if not isinstance(item, dict):
                 continue
             try:
+                position = max(1, int(item.get("position") or (i + 1)))
+                duration = float(item.get("estimated_duration_hours") or 1.0)
+                if duration <= 0:
+                    duration = 1.0
                 outline_clean.append(
                     {
-                        "position": int(item.get("position") or (i + 1)),
+                        "position": position,
                         "title": str(item.get("title", ""))[:200],
-                        "estimated_duration_hours": float(item.get("estimated_duration_hours") or 1.0),
+                        "estimated_duration_hours": duration,
                     }
                 )
             except (TypeError, ValueError):
                 continue
+        # Deduplicate positions (required by DB unique constraint per class)
+        seen_pos: set[int] = set()
+        deduped_outline: list[dict] = []
+        for item in outline_clean:
+            pos = item["position"]
+            while pos in seen_pos:
+                pos += 1
+            seen_pos.add(pos)
+            deduped_outline.append({**item, "position": pos})
+        outline_clean = deduped_outline
 
         suggestion = MiraClassAISuggestion(
             application_id=application.id,
@@ -347,15 +384,23 @@ async def adopt(
     await db.flush()
     await db.refresh(mc)
 
-    # Outlines
-    for item in suggestion.suggested_outline or []:
+    # Outlines — enforce position >= 1, duration > 0, unique positions
+    seen_pos: set[int] = set()
+    for i, item in enumerate(suggestion.suggested_outline or []):
         try:
+            pos = max(1, int(item.get("position", i + 1)))
+            while pos in seen_pos:
+                pos += 1
+            seen_pos.add(pos)
+            duration = float(item.get("estimated_duration_hours") or 1.0)
+            if duration <= 0:
+                duration = 1.0
             db.add(
                 MiraClassModuleOutline(
                     class_id=mc.id,
-                    position=int(item.get("position", 1)),
+                    position=pos,
                     title=str(item.get("title", ""))[:200] or "Module",
-                    estimated_duration_hours=float(item.get("estimated_duration_hours") or 1.0),
+                    estimated_duration_hours=duration,
                 )
             )
         except (TypeError, ValueError):
@@ -372,6 +417,14 @@ async def adopt(
 async def reject(
     db: AsyncSession, user_id: str, suggestion_id: str, reason: str
 ) -> MiraClassAISuggestion:
+    app = await get_my_application(db, user_id)
+    if not app:
+        raise NotFoundError("MentorApplication", user_id)
+    if app.status != "draft":
+        raise ConflictError(
+            f"Rejet impossible (status='{app.status}')",
+            data={"status": app.status},
+        )
     suggestion = await get_for_user(db, user_id, suggestion_id)
     if suggestion.status not in ("proposed",):
         raise ConflictError(

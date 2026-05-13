@@ -1,12 +1,16 @@
 """Endpoints — Import CV (PDF / manual paste) + extraction IA."""
+from pathlib import Path
+
 from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
-from pydantic import BaseModel
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import AuthenticatedUser, require_auth
+from app.core.config import settings
 from app.core.db import get_db
+from app.core.exceptions import NotFoundError, ValidationError
 from app.core.responses import success_response
-from app.core.exceptions import ValidationError
 from app.schemas.mentor_cv_import import MentorCVImportRead, MentorCVImportValidate
 from app.services import cv_import_service
 
@@ -21,7 +25,7 @@ def _serialize(instance) -> dict:
 
 class ManualPasteBody(BaseModel):
     source_type: str = "manual_paste"
-    raw_text: str
+    raw_text: str = Field(..., max_length=50_000)
 
 
 # Upload : multipart/form-data {file: PDF, source_type: "pdf"} OU JSON manual_paste
@@ -109,3 +113,23 @@ async def validate_import(
         db, user.user_id, import_id, body
     )
     return success_response(_serialize(instance), message="Import validé")
+
+
+@router.get("/{import_id}/file", summary="Télécharger le PDF du CV (authentifié)")
+async def download_cv_file(
+    import_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: AuthenticatedUser = Depends(require_auth),
+):
+    """Sert le PDF uploadé après vérification de l'appartenance à l'utilisateur."""
+    instance = await cv_import_service.get_for_user(db, user.user_id, import_id)
+    if not instance.file_url:
+        raise NotFoundError("CV file", import_id)
+    file_path = Path(settings.UPLOAD_DIR) / f"{instance.id}.pdf"
+    if not file_path.exists():
+        raise NotFoundError("CV file", import_id)
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        filename=f"cv_{instance.id}.pdf",
+    )

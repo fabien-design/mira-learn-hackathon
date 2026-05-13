@@ -7,7 +7,6 @@ from app.core.db import get_db
 from app.core.responses import success_response
 from app.schemas.mira_class import MiraClassRead
 from app.schemas.mira_class_ai_suggestion import (
-    AdoptSuggestionRequest,
     GenerateSuggestionsRequest,
     MiraClassAISuggestionRead,
     RejectSuggestionRequest,
@@ -61,7 +60,6 @@ async def get_suggestion(
 @router.post("/{suggestion_id}/adopt", summary="Adopter une suggestion (crée une mira_class)")
 async def adopt_suggestion(
     suggestion_id: str,
-    body: AdoptSuggestionRequest | None = None,
     db: AsyncSession = Depends(get_db),
     user: AuthenticatedUser = Depends(require_auth),
 ):

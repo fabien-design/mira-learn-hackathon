@@ -13,7 +13,7 @@ from app.models.mentor_profile_skill import MentorProfileSkill
 
 async def generate_unique_slug(db: AsyncSession, first_name: str, last_name: str) -> str:
     """Slug `prenom-nom`, suffixé `-N` si conflit (case-insensitive sur slug)."""
-    base = slugify(f"{first_name} {last_name}") or "mentor"
+    base = (slugify(f"{first_name} {last_name}") or "mentor")[:100]
     candidate = base
     counter = 1
     while True:
@@ -50,7 +50,7 @@ async def create_from_application(
     profile = MentorProfile(
         user_id=application.user_id,
         slug=slug,
-        display_name=f"{application.first_name} {application.last_name}".strip(),
+        display_name=f"{application.first_name} {application.last_name}".strip()[:120],
         headline=_truncate(application.transmission_pitch, 255),
         bio=application.bio or "",
         professional_journey=list(application.professional_journey or []),

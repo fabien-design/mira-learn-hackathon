@@ -92,7 +92,7 @@ async def create_pdf_import(
 
     target = _upload_dir() / f"{instance.id}.pdf"
     target.write_bytes(pdf_bytes)
-    instance.file_url = f"/uploads/{instance.id}.pdf"
+    instance.file_url = f"/v1/mentors/applications/me/cv-imports/{instance.id}/file"
     await db.flush()
     await db.refresh(instance)
     return instance
@@ -410,13 +410,21 @@ async def validate_extraction(
     instance.status = "validated"
     instance.validated_at = datetime.now(timezone.utc)
 
-    # Push dans la candidature : parcours, et upsert skills via slug → skill_id
+    # Push dans la candidature (draft uniquement — verrouillée après submit)
     app = await get_my_application(db, user_id)
-    if app:
+    if app and app.status == "draft":
         app.professional_journey = [e.model_dump() for e in body.validated_experiences]
 
         if body.validated_skills:
-            slugs = [s.skill_slug for s in body.validated_skills]
+            # Dédup par skill_slug avant upsert (contrainte UNIQUE application_id+skill_id)
+            seen_slugs: set[str] = set()
+            deduped_skills = []
+            for s in body.validated_skills:
+                if s.skill_slug not in seen_slugs:
+                    seen_slugs.add(s.skill_slug)
+                    deduped_skills.append(s)
+
+            slugs = [s.skill_slug for s in deduped_skills]
             skills_rows = (
                 await db.execute(
                     select(Skill).where(Skill.slug.in_(slugs), Skill.deleted_at.is_(None))
@@ -433,7 +441,7 @@ async def validate_extraction(
             ).scalars().all()
             existing_by_skill = {r.skill_id: r for r in existing_rows}
 
-            for s in body.validated_skills:
+            for s in deduped_skills:
                 skill_id = slug_to_id.get(s.skill_slug)
                 if not skill_id:
                     continue
