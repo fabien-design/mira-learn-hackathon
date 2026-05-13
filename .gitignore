@@ -27,3 +27,10 @@ build/
 # Logs
 *.log
 .local/
+
+# Uploaded files (CV PDFs stored locally — keep .gitkeep)
+uploads/*.pdf
+uploads/*.PDF
+
+# Process pids (make up/down)
+.pids/
