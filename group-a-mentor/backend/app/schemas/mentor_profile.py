@@ -81,3 +81,14 @@ class MentorProfilePublic(BaseModel):
     classes_given_count: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MentorProfileSkillPublic(BaseModel):
+    """Skill d'une fiche mentor publique."""
+    skill_id: str
+    skill_name: str
+    skill_slug: str
+    level: str
+    is_primary: bool
+    display_order: int
+    category: str

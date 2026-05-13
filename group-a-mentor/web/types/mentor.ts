@@ -43,7 +43,6 @@ export interface Skill {
   slug: string;
   name: string;
   description: string;
-  category: "business" | "design" | "tech" | "soft" | "lifestyle";
   popularity_score: number;
 }
 
@@ -160,6 +159,15 @@ export interface SuggestionOutlineItem {
   estimated_duration_hours: number;
 }
 
+export interface ProfileSkill {
+  skill_id: string;
+  skill_name: string;
+  skill_slug: string;
+  level: SkillLevel;
+  is_primary: boolean;
+  display_order: number;
+}
+
 export interface MentorProfilePublic {
   id: string;
   slug: string;
@@ -175,6 +183,10 @@ export interface MentorProfilePublic {
   aggregate_rating: number | null;
   rating_count: number;
   classes_given_count: number;
+}
+
+export interface MentorProfileDetail extends MentorProfilePublic {
+  skills: ProfileSkill[];
 }
 
 export interface RevenueSimulationResult {
