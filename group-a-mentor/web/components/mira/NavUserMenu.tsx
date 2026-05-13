@@ -76,7 +76,7 @@ export function NavUserMenu({ email, isAdmin = false }: NavUserMenuProps) {
         {isAdmin && (
           <DropdownMenuItem onClick={() => router.push("/admin/applications")}>
             <LayoutList className="size-4" />
-            Candidatures
+            Administration
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
