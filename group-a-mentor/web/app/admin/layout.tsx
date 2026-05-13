@@ -10,9 +10,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, loading } = useAuth();
 
+  const isAdmin = user?.user_metadata?.role === "admin";
+
   useEffect(() => {
-    if (!loading && !user) router.push("/login");
-  }, [loading, user, router]);
+    if (loading) return;
+    if (!user) router.push("/login");
+    else if (!isAdmin) router.push("/");
+  }, [loading, user, isAdmin, router]);
 
   if (loading) {
     return (
@@ -21,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </main>
     );
   }
-  if (!user) return null;
+  if (!user || !isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-background">
