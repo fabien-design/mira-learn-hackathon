@@ -18,6 +18,11 @@ class MentorApplicationSkillCreate(MentorApplicationSkillBase):
     pass
 
 
+class MentorApplicationSkillSetAll(BaseModel):
+    """PUT remplace toutes les skills déclarées par la candidature."""
+    skills: list[MentorApplicationSkillBase]
+
+
 class MentorApplicationSkillRead(MentorApplicationSkillBase):
     id: str
     application_id: str

@@ -6,6 +6,16 @@ from pydantic import BaseModel, ConfigDict, Field
 ApplicationStatus = Literal["draft", "submitted", "in_review", "validated", "rejected"]
 
 
+class ProfessionalExperience(BaseModel):
+    """Une étape du parcours professionnel."""
+
+    role: str = Field(..., max_length=120)
+    company: str = Field(..., max_length=120)
+    start_year: int = Field(..., ge=1970, le=2030)
+    end_year: Optional[int] = Field(None, ge=1970, le=2030)
+    description: str = Field(default="", max_length=2000)
+
+
 class MentorApplicationStep1(BaseModel):
     """Body pour POST /v1/mentors/applications + PATCH .../me — Étape 1 (identité)."""
 
@@ -15,11 +25,32 @@ class MentorApplicationStep1(BaseModel):
     prior_masterclasses_count: int = Field(default=0, ge=0)
 
 
+class MentorApplicationProfile(BaseModel):
+    """Body PATCH .../me/profile — étape 3.2 (profil pro + liens externes)."""
+
+    bio: str = Field(default="", max_length=10000)
+    professional_journey: list[ProfessionalExperience] = []
+    transmission_pitch: str = Field(default="", max_length=2000)
+    motivation: str = Field(default="", max_length=2000)
+    linkedin_url: Optional[str] = Field(None, max_length=255)
+    instagram_url: Optional[str] = Field(None, max_length=255)
+    website_url: Optional[str] = Field(None, max_length=255)
+
+
+class ClassReviewDecisionItem(BaseModel):
+    """Décision admin par mira_class proposée pendant la candidature."""
+
+    class_id: str
+    decision: Literal["validated_draft", "rejected"]
+    rejection_reason: Optional[str] = Field(None, max_length=2000)
+
+
 class MentorApplicationReviewDecision(BaseModel):
     """Body pour POST /v1/admin/mentors/applications/{id}/review — Décision admin."""
 
-    decision: Literal["validated", "rejected"]
+    decision: Literal["validated", "rejected", "in_review"]
     decision_reason: Optional[str] = Field(None, max_length=2000)
+    class_decisions: list[ClassReviewDecisionItem] = Field(default_factory=list)
 
 
 class MentorApplicationRead(BaseModel):
@@ -32,6 +63,13 @@ class MentorApplicationRead(BaseModel):
     last_name: str
     nomad_since_year: Optional[int]
     prior_masterclasses_count: int
+    bio: str = ""
+    professional_journey: list[ProfessionalExperience] = []
+    transmission_pitch: str = ""
+    motivation: str = ""
+    linkedin_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    website_url: Optional[str] = None
     submitted_at: Optional[datetime]
     reviewed_at: Optional[datetime]
     reviewed_by_admin_id: Optional[str]

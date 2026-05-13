@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, Index, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, IDMixin, SoftDeleteMixin, TimestampMixin
@@ -12,7 +12,7 @@ from app.models.base import Base, IDMixin, SoftDeleteMixin, TimestampMixin
 class MentorProfile(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "mentor_profile"
 
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    user_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), nullable=False, unique=True)
     slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
 
     # Identité publique

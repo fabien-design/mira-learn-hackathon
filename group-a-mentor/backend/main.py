@@ -18,6 +18,7 @@ MIGRATION HINT (post-hackathon, backbone Hello Mira) :
         app.include_router(v1_router.router)
 """
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,19 +47,33 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
-    # CORS (hackathon : permissif, sera restreint en V1 prod via edge-gateway)
-    # WHY : en dev, ServerErrorMiddleware (outermost Starlette) produit des 500
-    # sans headers CORS, ce qui bloque la réponse côté browser. allow_origins=["*"]
-    # garantit que même ces réponses passent. En prod, on revient aux origines explicites.
-    _cors_origins = ["*"] if settings.ENVIRONMENT == "development" else settings.CORS_ALLOW_ORIGINS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_cors_origins,
-        # allow_credentials ne peut pas être True avec allow_origins=["*"] (spec CORS)
-        allow_credentials=settings.ENVIRONMENT != "development",
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # CORS (hackathon : permissif, restreint en V1 prod via edge-gateway).
+    # WHY : on combine origin_regex (localhost:* + 127.0.0.1:*) + allow_origins liste
+    # explicite ; allow_credentials=True pour permettre cookies/JWT cross-origin.
+    if settings.ENVIRONMENT == "development":
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001",
+            ],
+            allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            expose_headers=["*"],
+            max_age=3600,
+        )
+    else:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.CORS_ALLOW_ORIGINS,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Exception handler global (réponses JSend)
     @app.exception_handler(AppException)
@@ -91,6 +106,9 @@ def create_app() -> FastAPI:
     async def on_shutdown() -> None:
         logger.info("Shutting down %s", settings.SERVICE_NAME)
         await close_db()
+
+    upload_dir = Path(settings.UPLOAD_DIR)
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Routes
     app.include_router(v1_router, prefix="/v1")

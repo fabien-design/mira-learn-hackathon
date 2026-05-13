@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, IDMixin
@@ -13,7 +13,9 @@ class MiraClassAISuggestion(Base, IDMixin):
     __tablename__ = "mira_class_ai_suggestion"
 
     application_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("mentor_application.id", ondelete="CASCADE"), nullable=False
+        PGUUID(as_uuid=False),
+        ForeignKey("mentor_application.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     # Contenu suggéré
@@ -32,7 +34,9 @@ class MiraClassAISuggestion(Base, IDMixin):
     # Lifecycle
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="proposed")
     adopted_into_class_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("mira_class.id", ondelete="SET NULL"), nullable=True
+        PGUUID(as_uuid=False),
+        ForeignKey("mira_class.id", ondelete="SET NULL"),
+        nullable=True,
     )
     rejected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rejected_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)

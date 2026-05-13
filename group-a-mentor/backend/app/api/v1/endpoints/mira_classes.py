@@ -37,11 +37,15 @@ async def create_class(
     db: AsyncSession = Depends(get_db),
 ):
     app = await _get_application_or_404(db, user.user_id)
+    # ai_assisted / source_suggestion_id are set only by the AI adoption flow
+    payload = body.model_dump(exclude={"application_id", "ai_assisted", "source_suggestion_id"})
     mc = MiraClass(
         application_id=app.id,
         mentor_user_id=user.user_id,
         status="draft",
-        **body.model_dump(),
+        ai_assisted=False,
+        source_suggestion_id=None,
+        **payload,
     )
     db.add(mc)
     await db.commit()

@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, Index, Integer, Numeric, String, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -12,7 +13,7 @@ class SkillDemandAggregate(Base, TimestampMixin):
     """PK = skill_id. Lecture seule en hackathon (seedée, pas d'endpoint write)."""
     __tablename__ = "skill_demand_aggregate"
 
-    skill_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    skill_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), primary_key=True)
 
     students_wanting_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     mentors_offering_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

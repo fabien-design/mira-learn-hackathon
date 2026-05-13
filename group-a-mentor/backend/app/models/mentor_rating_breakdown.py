@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -13,7 +14,9 @@ class MentorRatingBreakdown(Base, TimestampMixin):
     __tablename__ = "mentor_rating_breakdown"
 
     profile_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("mentor_profile.id", ondelete="CASCADE"), primary_key=True
+        PGUUID(as_uuid=False),
+        ForeignKey("mentor_profile.id", ondelete="CASCADE"),
+        primary_key=True,
     )
 
     axis_pedagogy: Mapped[Decimal | None] = mapped_column(Numeric(3, 2), nullable=True)

@@ -7,8 +7,10 @@ from app.core.auth import AuthenticatedUser, require_role
 from app.core.db import get_db
 from app.core.responses import success_response
 from app.models.mentor_application import MentorApplication
+from app.models.mentor_application_skill import MentorApplicationSkill
 from app.models.mira_class import MiraClass
 from app.schemas.mentor_application import MentorApplicationRead, MentorApplicationReviewDecision
+from app.schemas.mentor_application_skill import MentorApplicationSkillRead
 from app.schemas.mira_class import MiraClassRead
 from app.services.mentor_application_service import review_application
 
@@ -84,3 +86,20 @@ async def get_application_classes(
     )
     classes = result.scalars().all()
     return success_response([MiraClassRead.model_validate(c).model_dump() for c in classes])
+
+
+@router.get("/{application_id}/skills", response_model=dict)
+async def get_application_skills(
+    application_id: str,
+    user: AuthenticatedUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(MentorApplicationSkill).where(
+            MentorApplicationSkill.application_id == application_id,
+        )
+    )
+    rows = result.scalars().all()
+    return success_response(
+        [MentorApplicationSkillRead.model_validate(r).model_dump() for r in rows]
+    )
