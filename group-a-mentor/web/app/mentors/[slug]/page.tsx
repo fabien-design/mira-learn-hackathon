@@ -20,13 +20,6 @@ import { Stars } from "@/components/mira/Stars";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MentorProfileDetail, MiraClass } from "@/types/mentor";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  business: "Business",
-  design: "Design",
-  tech: "Tech",
-  soft: "Soft skills",
-  lifestyle: "Lifestyle",
-};
 
 export default function MentorDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -50,10 +43,6 @@ export default function MentorDetailPage() {
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."))
       .finally(() => setLoading(false));
   }, [slug]);
-
-  const primaryCategory = mentor?.skills?.find((s) => s.is_primary)?.category
-    ?? mentor?.skills?.[0]?.category;
-  const categoryLabel = primaryCategory ? CATEGORY_LABELS[primaryCategory] : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,7 +78,7 @@ export default function MentorDetailPage() {
               <MiraAvatar name={mentor.display_name} size={120} ring />
               <div>
                 <Eyebrow tone="accent" className="mb-2">
-                  Mira Mentor{categoryLabel ? ` · ${categoryLabel}` : ""}
+                  Mira Mentor
                 </Eyebrow>
                 <SectionTitle as="h1" size="hero" className="mt-0">
                   {mentor.display_name}

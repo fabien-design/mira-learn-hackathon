@@ -43,7 +43,6 @@ export interface Skill {
   slug: string;
   name: string;
   description: string;
-  category: "business" | "design" | "tech" | "soft" | "lifestyle";
   popularity_score: number;
 }
 
@@ -167,7 +166,6 @@ export interface ProfileSkill {
   level: SkillLevel;
   is_primary: boolean;
   display_order: number;
-  category: string;
 }
 
 export interface MentorProfilePublic {
