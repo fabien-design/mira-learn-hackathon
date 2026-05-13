@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -5,8 +7,29 @@ import { Eyebrow } from "@/components/mira/Eyebrow";
 import { Footer } from "@/components/mira/Footer";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { SmartNav } from "@/components/mira/SmartNav";
+import { useAuth } from "@/hooks/useAuth";
+import { useApplication } from "@/lib/wizard-state";
+import type { ApplicationStatus } from "@/types/mentor";
+
+const BLOCKED_APPLICATION_STATUSES: ApplicationStatus[] = [
+  "draft",
+  "submitted",
+  "in_review",
+  "validated",
+];
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const { application, loading: appLoading } = useApplication();
+
+  const showDevenirMentorCta =
+    !user ||
+    (Boolean(user) &&
+      !appLoading &&
+      (!application ||
+        application.status === "rejected" ||
+        !BLOCKED_APPLICATION_STATUSES.includes(application.status)));
+
   return (
     <div className="min-h-screen bg-background">
       <SmartNav />
@@ -22,11 +45,13 @@ export default function HomePage() {
             masterclass en moins de 15 minutes.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/mentors/apply/step-1">
-              <MiraButton trailingIcon={<ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />}>
-                Devenir mentor
-              </MiraButton>
-            </Link>
+            {showDevenirMentorCta && (
+              <Link href="/mentors/apply/step-1">
+                <MiraButton trailingIcon={<ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />}>
+                  Devenir mentor
+                </MiraButton>
+              </Link>
+            )}
             <Link href="/mentors">
               <MiraButton variant="secondary">Voir les mentors</MiraButton>
             </Link>
