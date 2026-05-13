@@ -4,12 +4,12 @@ import { ArrowRight } from "lucide-react";
 import { Eyebrow } from "@/components/mira/Eyebrow";
 import { Footer } from "@/components/mira/Footer";
 import { MiraButton } from "@/components/mira/MiraButton";
-import { PublicNav } from "@/components/mira/PublicNav";
+import { SmartNav } from "@/components/mira/SmartNav";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      <PublicNav />
+      <SmartNav />
       <main className="mx-auto w-full max-w-[1320px] px-6 pb-24 pt-24 md:px-8">
         <div className="max-w-3xl">
           <Eyebrow>Mira Learn · pour les digital nomads francophones</Eyebrow>

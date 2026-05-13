@@ -53,6 +53,7 @@ export function AdminNav() {
           >
             ↗ Voir le site public
           </Link>
+          {user?.email && <MiraAvatar name={user.email} size={32} className="ml-7" />}
           <button
             type="button"
             onClick={logout}
@@ -60,7 +61,6 @@ export function AdminNav() {
           >
             Déconnexion
           </button>
-          {user?.email && <MiraAvatar name={user.email} size={32} />}
         </div>
       </div>
     </div>

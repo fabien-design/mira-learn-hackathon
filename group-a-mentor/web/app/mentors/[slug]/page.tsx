@@ -12,7 +12,7 @@ import { JourneyTimeline } from "@/components/mira/JourneyTimeline";
 import { MiraAvatar } from "@/components/mira/MiraAvatar";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { MiraCard } from "@/components/mira/MiraCard";
-import { PublicNav } from "@/components/mira/PublicNav";
+import { SmartNav } from "@/components/mira/SmartNav";
 import { SectionTitle } from "@/components/mira/SectionTitle";
 import { Stars } from "@/components/mira/Stars";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,7 +43,7 @@ export default function MentorDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PublicNav />
+      <SmartNav />
 
       <div className="mx-auto w-full max-w-[1320px] px-6 md:px-8 pt-7">
         <Link
