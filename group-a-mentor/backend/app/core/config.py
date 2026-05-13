@@ -54,11 +54,21 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""  # facultatif si on utilise JWKS RS256 (recommandé)
     SUPABASE_JWKS_URL: str = ""  # auto-derivé depuis SUPABASE_URL si vide
 
-    # OpenRouter (LLM)
-    # 1 seule clé partagée pour les 4 groupes pendant le hackathon
-    # Cap budget côté OpenRouter dashboard (~$50 pour 3 jours)
-    OPENROUTER_API_KEY: str
+    # LLM provider switch — ollama (local dev) ou openrouter (prod)
+    # WHY : permet d'iter localement sans burn le budget OpenRouter ($5 cap).
+    LLM_PROVIDER: Literal["ollama", "openrouter"] = "ollama"
+
+    # OpenRouter (LLM, prod)
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_DEFAULT_MODEL: str = "anthropic/claude-3.5-haiku"
+
+    # Ollama (LLM, local dev — endpoint OpenAI-compatible /v1/chat/completions)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_DEFAULT_MODEL: str = "llama3.2"
+
+    # CV uploads (disque local pendant hackathon ; URL servie sous /uploads)
+    UPLOAD_DIR: str = "./uploads"
 
     # MiraClass — Simulation revenu
     PLATFORM_FEE_RATIO: float = 0.25  # 25% de frais de plateforme sur le revenu brut
