@@ -321,6 +321,23 @@ async def run_extract_background(import_id: str) -> None:
                 await db.rollback()
             except Exception:
                 logger.exception("CV extract bg: rollback failed for %s", import_id)
+            # WHY: rollback leaves status='extracting' in DB; open fresh session to mark failed
+            try:
+                async with AsyncSessionLocal() as recovery_db:
+                    stuck = (
+                        await recovery_db.execute(
+                            select(MentorCVImport).where(
+                                MentorCVImport.id == import_id,
+                                MentorCVImport.status == "extracting",
+                            )
+                        )
+                    ).scalar_one_or_none()
+                    if stuck:
+                        stuck.status = "failed"
+                        stuck.error_message = "Extraction échouée (erreur interne)."
+                        await recovery_db.commit()
+            except Exception:
+                logger.exception("CV extract bg: recovery session failed for %s", import_id)
 
 
 def _safe_json_parse(content: str) -> dict[str, Any]:
