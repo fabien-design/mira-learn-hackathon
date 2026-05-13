@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 import { MiraLogo } from "./Logo";
+import { NavUserMenu } from "./NavUserMenu";
 
 const NAV_ITEMS = [
   { href: "/mentors", label: "Mentors" },
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
 export function PublicNav() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const isAdmin = user?.user_metadata?.role === "admin";
 
   return (
     <div className="sticky top-0 z-40 border-b border-black/5 bg-[color:var(--warm-beige)]/85 backdrop-blur-md">
@@ -58,6 +60,11 @@ export function PublicNav() {
               Devenir mentor
             </Button>
           </Link>
+          {user && (
+            <div className="ml-3">
+              <NavUserMenu email={user.email ?? user.id} isAdmin={isAdmin} />
+            </div>
+          )}
         </div>
       </div>
     </div>

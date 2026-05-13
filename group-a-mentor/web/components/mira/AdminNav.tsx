@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
 
-import { MiraAvatar } from "./MiraAvatar";
 import { MiraLogo } from "./Logo";
+import { NavUserMenu } from "./NavUserMenu";
 
 const SECTIONS = [
   { href: "/admin/applications", label: "Candidatures", active: true },
@@ -18,12 +16,6 @@ const SECTIONS = [
 
 export function AdminNav() {
   const { user } = useAuth();
-  const router = useRouter();
-
-  async function logout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
 
   return (
     <div className="border-b border-rule bg-card">
@@ -53,14 +45,11 @@ export function AdminNav() {
           >
             ↗ Voir le site public
           </Link>
-          <button
-            type="button"
-            onClick={logout}
-            className="text-[13px] font-medium text-muted-foreground hover:text-charcoal"
-          >
-            Déconnexion
-          </button>
-          {user?.email && <MiraAvatar name={user.email} size={32} />}
+          {user?.email && (
+            <div className="ml-7">
+              <NavUserMenu email={user.email} isAdmin />
+            </div>
+          )}
         </div>
       </div>
     </div>

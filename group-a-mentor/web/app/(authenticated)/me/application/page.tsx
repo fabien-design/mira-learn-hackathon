@@ -8,7 +8,7 @@ import { ApiError, apiClient } from "@/lib/api-client";
 import { Eyebrow } from "@/components/mira/Eyebrow";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { MiraCard } from "@/components/mira/MiraCard";
-import { PublicNav } from "@/components/mira/PublicNav";
+import { SmartNav } from "@/components/mira/SmartNav";
 import { SectionTitle } from "@/components/mira/SectionTitle";
 import { StatusBadge } from "@/components/mira/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,7 +116,7 @@ export default function MyApplicationPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <PublicNav />
+        <SmartNav />
         <div className="mx-auto w-full max-w-3xl px-6 py-10 md:px-8">
           <Skeleton className="h-48 rounded-2xl" />
         </div>
@@ -127,7 +127,7 @@ export default function MyApplicationPage() {
   if (!app) {
     return (
       <div className="min-h-screen bg-background">
-        <PublicNav />
+        <SmartNav />
         <div className="mx-auto w-full max-w-3xl px-6 py-10 md:px-8">
           <MiraCard>
             <SectionTitle as="h1" size="page">Pas encore de candidature</SectionTitle>
@@ -148,7 +148,7 @@ export default function MyApplicationPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PublicNav />
+      <SmartNav />
       <div className="mx-auto w-full max-w-3xl px-6 py-10 md:px-8">
         {/* Success / status banner */}
         {app.status === "submitted" && (

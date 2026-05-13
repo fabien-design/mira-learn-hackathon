@@ -12,7 +12,7 @@ import { FilterChip } from "@/components/mira/FilterChip";
 import { Footer } from "@/components/mira/Footer";
 import { MentorCard } from "@/components/mira/MentorCard";
 import { MiraButton } from "@/components/mira/MiraButton";
-import { PublicNav } from "@/components/mira/PublicNav";
+import { SmartNav } from "@/components/mira/SmartNav";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MentorProfilePublic, Skill } from "@/types/mentor";
 
@@ -75,7 +75,7 @@ function DirectoryInner() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PublicNav />
+      <SmartNav />
 
       {/* Hero */}
       <section className="pb-14 pt-20">
