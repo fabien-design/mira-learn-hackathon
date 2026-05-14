@@ -1,14 +1,14 @@
 """Service métier — mentor_cv_import (upload + parsing PDF + extraction LLM)."""
 from __future__ import annotations
 
-import io
 import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from pypdf import PdfReader
+import pymupdf
+import pymupdf4llm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,35 +34,21 @@ def _upload_dir() -> Path:
     return d
 
 
-def _is_garbled(text: str) -> bool:
-    """Détecte un PDF mal encodé (espace entre chaque lettre type 'D a n s e').
-    WHY : pypdf échoue silencieusement sur certains encodages propriétaires ;
-    le texte extrait ressemble à des caractères isolés séparés d'espaces.
-    """
-    words = text.split()
-    if not words:
-        return True
-    single_char_ratio = sum(1 for w in words if len(w) == 1) / len(words)
-    return single_char_ratio > 0.5
-
-
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
-    """Lit le texte brut d'un PDF via pypdf. Lève ValidationError si illisible."""
+    """Extrait le texte d'un PDF en Markdown via pymupdf4llm."""
     try:
-        reader = PdfReader(io.BytesIO(pdf_bytes))
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
     except Exception as exc:
         raise ValidationError(f"PDF illisible: {exc}", field="file") from exc
-    parts: list[str] = []
-    for page in reader.pages:
-        try:
-            parts.append(page.extract_text() or "")
-        except Exception:
-            continue
-    text = "\n\n".join(p for p in parts if p.strip())
-    if _is_garbled(text):
+    try:
+        text = pymupdf4llm.to_markdown(doc)
+    except Exception as exc:
+        raise ValidationError(f"Extraction PDF échouée: {exc}", field="file") from exc
+    finally:
+        doc.close()
+    if not text.strip():
         raise ValidationError(
-            "PDF mal encodé — le texte ne peut pas être extrait automatiquement. "
-            "Utilisez la saisie manuelle.",
+            "PDF vide ou non-extractible — utilisez la saisie manuelle.",
             field="file",
         )
     return text
