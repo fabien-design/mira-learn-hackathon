@@ -222,11 +222,11 @@ export default function MyApplicationPage() {
           <Eyebrow className="mt-5 mb-1">
             Identité <span className="font-normal normal-case text-muted-foreground">· non modifiable</span>
           </Eyebrow>
-          <SummaryRow label="Nom" value={fullName} locked />
+          <SummaryRow label="Nom" value={fullName} locked={app.status !== 'draft'} />
           <SummaryRow
             label="Nomade depuis"
             value={app.nomad_since_year ? `${app.nomad_since_year}` : "—"}
-            locked
+            locked={app.status !== 'draft'}
           />
 
           <Eyebrow className="mt-6 mb-1">Profil</Eyebrow>
