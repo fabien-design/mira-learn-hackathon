@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Lock, RefreshCw } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/api-client";
 import { Eyebrow } from "@/components/mira/Eyebrow";
@@ -63,30 +63,24 @@ function SummaryRow({
   label,
   value,
   locked,
-  editable,
-  editHref,
 }: {
   label: string;
   value: string;
   locked?: boolean;
-  editable?: boolean;
-  editHref?: string;
 }) {
   return (
-    <div className="grid grid-cols-[150px_1fr_auto] items-center gap-4 border-b border-rule py-3.5">
+    <div
+      className={cn(
+        "grid items-center gap-4 border-b border-rule py-3.5",
+        locked ? "grid-cols-[150px_1fr_auto]" : "grid-cols-[150px_1fr]",
+      )}
+    >
       <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
       <span className="text-sm text-charcoal">{value}</span>
       {locked ? (
         <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground">
           <Lock className="h-3 w-3" strokeWidth={2} /> Verrouillé
         </span>
-      ) : editable && editHref ? (
-        <Link
-          href={editHref}
-          className="text-[12px] font-semibold text-mira-red hover:underline"
-        >
-          Éditer
-        </Link>
       ) : null}
     </div>
   );
@@ -203,40 +197,46 @@ export default function MyApplicationPage() {
         <MiraCard className="mt-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-charcoal">Ton dossier</h3>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium",
-                isEditable
-                  ? "bg-success/[0.08] text-success"
-                  : "bg-warm-beige text-muted-foreground",
-              )}
-            >
-              {isEditable ? "✎ Éditable" : <><Lock className="h-3 w-3" /> Verrouillé · en examen</>}
-            </span>
+            {isEditable ? (
+              <Link
+                href={app.status === "draft" ? "/mentors/apply/step-1" : "/mentors/apply/step-3"}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium transition-opacity hover:opacity-70",
+                  "bg-success/[0.08] text-success",
+                )}
+              >
+                ✎ Éditable
+              </Link>
+            ) : (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium",
+                  "bg-warm-beige text-muted-foreground",
+                )}
+              >
+                <Lock className="h-3 w-3" /> Verrouillé · en examen ou validé
+              </span>
+            )}
           </div>
 
           <Eyebrow className="mt-5 mb-1">
             Identité <span className="font-normal normal-case text-muted-foreground">· non modifiable</span>
           </Eyebrow>
-          <SummaryRow label="Nom" value={fullName} locked />
+          <SummaryRow label="Nom" value={fullName} locked={app.status !== 'draft'} />
           <SummaryRow
             label="Nomade depuis"
             value={app.nomad_since_year ? `${app.nomad_since_year}` : "—"}
-            locked
+            locked={app.status !== 'draft'}
           />
 
           <Eyebrow className="mt-6 mb-1">Profil</Eyebrow>
           <SummaryRow
             label="Bio courte"
             value={app.bio.slice(0, 120) || "—"}
-            editable={isEditable && app.status === "draft"}
-            editHref="/mentors/apply/step-3"
           />
           <SummaryRow
             label="Transmission"
             value={app.transmission_pitch || "—"}
-            editable={isEditable && app.status === "draft"}
-            editHref="/mentors/apply/step-3"
           />
 
           {classes.length > 0 && (
@@ -247,8 +247,6 @@ export default function MyApplicationPage() {
                   key={c.id}
                   label={c.title.slice(0, 24)}
                   value={`${c.total_hours_collective}h coll. · ${c.format_envisaged} · ${c.status}`}
-                  editable={isEditable && app.status === "draft"}
-                  editHref={`/mentors/apply/step-5?class_id=${c.id}`}
                 />
               ))}
             </>
@@ -277,16 +275,6 @@ export default function MyApplicationPage() {
           <Link href="/mentors">
             <MiraButton variant="ghost">Voir l'annuaire</MiraButton>
           </Link>
-          {isEditable && app.status === "draft" && (
-            <Link href="/mentors/apply/step-1">
-              <MiraButton
-                variant="secondary"
-                leadingIcon={<RefreshCw className="h-3.5 w-3.5" strokeWidth={1.8} />}
-              >
-                Reprendre l'édition
-              </MiraButton>
-            </Link>
-          )}
         </div>
       </div>
     </div>

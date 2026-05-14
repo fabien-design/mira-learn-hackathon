@@ -13,6 +13,7 @@ import { FieldRow } from "@/components/wizard/FieldRow";
 import { Input } from "@/components/ui/input";
 import type { MentorApplication } from "@/types/mentor";
 
+
 type NomadSinceChip =
   | "Moins d'un an"
   | "1 – 2 ans"
@@ -37,11 +38,13 @@ const PRIOR_CLASSES_LABELS: Record<PriorClassesChip, string> = {
   never: "Jamais — ce serait une première",
 };
 
-const NOMAD_SINCE_TO_YEAR: Record<NomadSinceChip, number | null> = {
-  "Moins d'un an": 2025,
-  "1 – 2 ans": 2024,
-  "3 – 5 ans": 2021,
-  "Plus de 5 ans": 2018,
+const date = new Date();
+
+const NOMAD_SINCE_TO_YEAR: Record<NomadSinceChip, number|null> = {
+  "Moins d'un an": date.getFullYear(),
+  "1 – 2 ans": date.getFullYear() - 1,
+  "3 – 5 ans": date.getFullYear() - 4,
+  "Plus de 5 ans": date.getFullYear() - 6,
   "Pas encore — je prépare le saut": null,
 };
 

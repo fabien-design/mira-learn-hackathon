@@ -64,7 +64,7 @@ function Step5Inner() {
   const classId = params.get("class_id");
 
   const [application, setApplication] = useState<MentorApplication | null>(null);
-  const [mc, setMc] = useState<MiraClass | null>(null);
+  const [title, setTitle] = useState("");
   const [totalCollective, setTotalCollective] = useState(10);
   const [totalIndividual, setTotalIndividual] = useState(0);
   const [rythm, setRythm] = useState<RythmPattern | null>(null);
@@ -83,12 +83,12 @@ function Step5Inner() {
       apiClient.get<MiraClass>(`/v1/mentors/applications/me/classes/${classId}`),
     ])
       .then(([app, cls]) => {
-        if (!app || app.status !== "draft") {
+        if (!app || !["draft", "submitted"].includes(app.status)) {
           router.replace("/me/application");
           return;
         }
         setApplication(app);
-        setMc(cls);
+        setTitle(cls.title ?? "");
         setTotalCollective(cls.total_hours_collective || 10);
         setTotalIndividual(cls.total_hours_individual || 0);
         setRythm(cls.rythm_pattern);
@@ -112,6 +112,7 @@ function Step5Inner() {
     setError(null);
     try {
       await apiClient.patch(`/v1/mentors/applications/me/classes/${classId}`, {
+        title: title.trim(),
         total_hours_collective: totalCollective,
         total_hours_individual: totalIndividual,
         total_hours: totalCollective + totalIndividual,
@@ -126,7 +127,10 @@ function Step5Inner() {
     }
   }
 
-  const canContinue = rythm !== null && totalCollective + totalIndividual > 0;
+  const canContinue =
+    title.trim().length > 0 &&
+    rythm !== null &&
+    totalCollective + totalIndividual > 0;
 
   return (
     <WizardShell currentStep={5}>
@@ -137,11 +141,20 @@ function Step5Inner() {
             Comment ça <span className="font-serif-italic">se déroule ?</span>
           </>
         }
-        subtitle={mc ? `Mira Class : ${mc.title}` : undefined}
+        subtitle="Titre, durées, rythme et lieux — tu peux tout ajuster tant que la candidature est modifiable."
       />
       <ErrorBanner message={error} />
 
-      <section className="grid gap-5 md:grid-cols-2">
+      <FieldRow label="Titre de la Mira Class" hint="200 caractères max. Visible par les nomades une fois publiée.">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+          placeholder="Ex. Lancer un SaaS B2B en nomadisme"
+          className="h-11 rounded-xl border-rule bg-card text-base focus-visible:border-mira-red focus-visible:ring-mira-red/15"
+        />
+      </FieldRow>
+
+      <section className="mt-8 grid gap-5 md:grid-cols-2">
         <FieldRow label="Heures collectives (estimées)">
           <Input
             type="number"

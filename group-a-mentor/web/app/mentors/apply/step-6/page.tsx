@@ -60,7 +60,7 @@ function Step6Inner() {
       apiClient.get<MiraClass>(`/v1/mentors/applications/me/classes/${classId}`),
     ])
       .then(([app, cls]) => {
-        if (!app || app.status !== "draft") {
+        if (!app || !["draft", "submitted"].includes(app.status)) {
           router.replace("/me/application");
           return;
         }
@@ -110,7 +110,7 @@ function Step6Inner() {
         recommended_price_per_hour_collective_cents: rateCollective * 100,
         recommended_price_per_hour_individual_cents: rateIndividual * 100,
       });
-      router.push("/mentors/apply/step-7");
+      router.push("/mentors/apply/step-4?from=step-6");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
       setSaving(false);

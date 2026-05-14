@@ -77,8 +77,8 @@ async def create_pdf_import(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
-        raise ConflictError("CV uploadable uniquement en draft", data={"status": app.status})
+    if app.status not in ("draft", "submitted"):
+        raise ConflictError("CV uploadable uniquement en draft ou submitted", data={"status": app.status})
 
     if not filename.lower().endswith(".pdf"):
         raise ValidationError("Seuls les fichiers PDF sont acceptés.", field="file")
@@ -109,7 +109,7 @@ async def create_manual_import(
     app = await get_my_application(db, user_id)
     if not app:
         raise NotFoundError("MentorApplication", user_id)
-    if app.status != "draft":
+    if app.status not in ("draft", "submitted"):
         raise ConflictError("Import non modifiable", data={"status": app.status})
 
     if not raw_text.strip():
@@ -476,9 +476,9 @@ async def validate_extraction(
     instance.status = "validated"
     instance.validated_at = datetime.now(timezone.utc)
 
-    # Push dans la candidature (draft uniquement — verrouillée après submit)
+    # Push dans la candidature (modifiable tant que pas in_review)
     app = await get_my_application(db, user_id)
-    if app and app.status == "draft":
+    if app and app.status in ("draft", "submitted"):
         app.professional_journey = [e.model_dump() for e in body.validated_experiences]
 
         # Prefill profile fields from extracted_profile_raw (only if currently empty)

@@ -85,7 +85,7 @@ function Step3Inner() {
           router.replace("/mentors/apply/step-1");
           return;
         }
-        if (app.status !== "draft") {
+        if (!["draft", "submitted"].includes(app.status)) {
           router.replace("/me/application");
           return;
         }
