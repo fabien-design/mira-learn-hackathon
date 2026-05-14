@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Pencil, RefreshCw, Sparkles } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Pencil, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
@@ -17,6 +17,19 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassSuggestion, MentorApplication, MiraClass, Skill } from "@/types/mentor";
 
+function AfterStep6Banner() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("from") !== "step-6") return null;
+  return (
+    <div
+      role="status"
+      className="mb-6 rounded-xl border border-success/25 bg-success/[0.06] px-4 py-3 text-sm leading-relaxed text-charcoal"
+    >
+      Masterclass enregistrée. 
+    </div>
+  );
+}
+
 export default function Step4Page() {
   const router = useRouter();
   const [application, setApplication] = useState<MentorApplication | null>(null);
@@ -28,6 +41,7 @@ export default function Step4Page() {
   const [error, setError] = useState<string | null>(null);
   const [manualTitle, setManualTitle] = useState("");
   const [adopting, setAdopting] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -122,9 +136,26 @@ export default function Step4Page() {
     }
   }
 
+  async function removeClass(classId: string, title: string) {
+    const ok = window.confirm(
+      `Supprimer « ${title} » ? Tu pourras en créer une autre ensuite. Cette action est définitive pour cette proposition.`,
+    );
+    if (!ok) return;
+    setDeletingId(classId);
+    setError(null);
+    try {
+      await apiClient.delete(`/v1/mentors/applications/me/classes/${classId}`);
+      setExistingClasses((prev) => prev.filter((c) => c.id !== classId));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Suppression impossible.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   function continueExisting() {
     if (existingClasses.length > 0) {
-      // Classes déjà configurées — on saute step-5 et step-6, on va directement au récap
+      // Hub : l’utilisateur a fini d’ajouter / ajuster ses classes → récap (étape 7)
       router.push("/mentors/apply/step-7");
     } else {
       setError("Adopte une suggestion ou crée ta propre Mira Class avant de continuer.");
@@ -144,36 +175,9 @@ export default function Step4Page() {
       />
       <ErrorBanner message={error} />
 
-      {/* Classes déjà créées — affichées en priorité si la candidature est en submitted */}
-      {!loading && existingClasses.length > 0 && (
-        <section className="mb-8">
-          <Eyebrow className="mb-3">Tes masterclasses</Eyebrow>
-          <div className="flex flex-col gap-3">
-            {existingClasses.map((c) => (
-              <MiraCard
-                key={c.id}
-                className="flex items-center justify-between gap-4 py-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-charcoal">{c.title}</p>
-                  <p className="mt-0.5 text-[12px] text-muted-foreground">
-                    {c.total_hours_collective}h coll. · {c.total_hours_individual}h indiv.
-                    {c.format_envisaged ? ` · ${c.format_envisaged}` : ""}
-                  </p>
-                </div>
-                <MiraButton
-                  variant="secondary"
-                  size="sm"
-                  leadingIcon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />}
-                  onClick={() => router.push(`/mentors/apply/step-5?class_id=${c.id}`)}
-                >
-                  Modifier
-                </MiraButton>
-              </MiraCard>
-            ))}
-          </div>
-        </section>
-      )}
+      <Suspense fallback={null}>
+        <AfterStep6Banner />
+      </Suspense>
 
       {loading ? (
         <div className="grid gap-4 md:grid-cols-3">
@@ -222,7 +226,50 @@ export default function Step4Page() {
         </>
       )}
 
-      <MiraCard className="mt-10">
+      {/* Classes déjà créées — après le bloc suggestions Mira AI */}
+      {!loading && existingClasses.length > 0 && (
+        <section className="mt-10">
+          <Eyebrow className="mb-3">Tes masterclasses</Eyebrow>
+          <div className="flex flex-col gap-3">
+            {existingClasses.map((c) => (
+              <MiraCard
+                key={c.id}
+                className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-charcoal">{c.title}</p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    {c.total_hours_collective}h coll. · {c.total_hours_individual}h indiv.
+                    {c.format_envisaged ? ` · ${c.format_envisaged}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <MiraButton
+                    variant="secondary"
+                    size="sm"
+                    leadingIcon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />}
+                    onClick={() => router.push(`/mentors/apply/step-5?class_id=${c.id}`)}
+                    disabled={!!deletingId}
+                  >
+                    Modifier
+                  </MiraButton>
+                  <MiraButton
+                    variant="destructive"
+                    size="sm"
+                    leadingIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={1.8} />}
+                    onClick={() => void removeClass(c.id, c.title)}
+                    disabled={deletingId === c.id || !!adopting}
+                  >
+                    {deletingId === c.id ? "Suppression…" : "Supprimer"}
+                  </MiraButton>
+                </div>
+              </MiraCard>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <MiraCard className="mt-4">
         <h3 className="text-base font-semibold text-charcoal">Proposer la mienne</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Tu sais déjà ce que tu veux enseigner ? Donne un titre.
@@ -243,7 +290,8 @@ export default function Step4Page() {
       <WizardFooter
         prevHref="/mentors/apply/step-3"
         onContinue={continueExisting}
-        saving={!!adopting}
+        continueLabel={existingClasses.length > 0 ? "Aller au récapitulatif" : undefined}
+        saving={!!adopting || !!deletingId}
         draftSavedLabel={application ? "Brouillon enregistré" : ""}
       />
     </WizardShell>

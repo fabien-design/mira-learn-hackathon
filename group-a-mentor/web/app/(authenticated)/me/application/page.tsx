@@ -63,30 +63,24 @@ function SummaryRow({
   label,
   value,
   locked,
-  editable,
-  editHref,
 }: {
   label: string;
   value: string;
   locked?: boolean;
-  editable?: boolean;
-  editHref?: string;
 }) {
   return (
-    <div className="grid grid-cols-[150px_1fr_auto] items-center gap-4 border-b border-rule py-3.5">
+    <div
+      className={cn(
+        "grid items-center gap-4 border-b border-rule py-3.5",
+        locked ? "grid-cols-[150px_1fr_auto]" : "grid-cols-[150px_1fr]",
+      )}
+    >
       <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
       <span className="text-sm text-charcoal">{value}</span>
       {locked ? (
         <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground">
           <Lock className="h-3 w-3" strokeWidth={2} /> Verrouillé
         </span>
-      ) : editable && editHref ? (
-        <Link
-          href={editHref}
-          className="text-[12px] font-semibold text-mira-red hover:underline"
-        >
-          Éditer
-        </Link>
       ) : null}
     </div>
   );
@@ -239,14 +233,10 @@ export default function MyApplicationPage() {
           <SummaryRow
             label="Bio courte"
             value={app.bio.slice(0, 120) || "—"}
-            editable={isEditable}
-            editHref="/mentors/apply/step-3"
           />
           <SummaryRow
             label="Transmission"
             value={app.transmission_pitch || "—"}
-            editable={isEditable}
-            editHref="/mentors/apply/step-3"
           />
 
           {classes.length > 0 && (
@@ -257,8 +247,6 @@ export default function MyApplicationPage() {
                   key={c.id}
                   label={c.title.slice(0, 24)}
                   value={`${c.total_hours_collective}h coll. · ${c.format_envisaged} · ${c.status}`}
-                  editable={isEditable}
-                  editHref={`/mentors/apply/step-5?class_id=${c.id}`}
                 />
               ))}
             </>
