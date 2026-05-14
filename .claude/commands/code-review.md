@@ -7,16 +7,14 @@ Run a comprehensive code review using parallel agents, then synthesize findings.
 Determine what code to review using this priority:
 
 1. **User specifies scope** - If the user provides a branch name, commit SHA, PR number/URL, or file paths, review that
-2. **On a feature branch** - Review all changes on current branch vs main/master (`git diff main...HEAD`)
-3. **On main/master with staged changes** - Review staged files (`git diff --staged`)
-4. **On main/master, nothing staged** - Review the latest commit (`git show HEAD`)
+2. **Default** - Review all changes between `origin/develop` and `main` (`git diff main...origin/develop`)
 
 Examples:
 - "review my branch" → branch diff
 - "review pr 123" or "review https://github.com/org/repo/pull/123" → fetch PR via gh
 - "review commit abc123" → that specific commit
 - "review src/auth.ts" → just that file's recent changes
-- (no scope given, on feature branch) → automatic branch diff
+- (no scope given) → `git diff main...origin/develop`
 
 ## Instructions
 
