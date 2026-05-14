@@ -4,11 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Pencil, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { Eyebrow } from "@/components/mira/Eyebrow";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { MiraCard } from "@/components/mira/MiraCard";
@@ -23,7 +24,7 @@ function AfterStep6Banner() {
   return (
     <div
       role="status"
-      className="mb-6 rounded-xl border border-success/25 bg-success/[0.06] px-4 py-3 text-sm leading-relaxed text-charcoal"
+      className="mb-6 rounded-xl border border-success/25 bg-success/6 px-4 py-3 text-sm leading-relaxed text-charcoal"
     >
       Masterclass enregistrée. 
     </div>
@@ -38,7 +39,6 @@ export default function Step4Page() {
   const [skillsById, setSkillsById] = useState<Map<string, Skill>>(new Map());
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [manualTitle, setManualTitle] = useState("");
   const [adopting, setAdopting] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -68,13 +68,12 @@ export default function Step4Page() {
         setSuggestions(sugg);
         setSkillsById(new Map(skills.map((s) => [s.id, s])));
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."))
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."))
       .finally(() => setLoading(false));
   }, [router]);
 
   async function generate() {
     setGenerating(true);
-    setError(null);
     try {
       const rows = await apiClient.post<ClassSuggestion[]>(
         "/v1/mentors/applications/me/class-suggestions/generate",
@@ -82,7 +81,7 @@ export default function Step4Page() {
       );
       setSuggestions(rows);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Génération impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Génération impossible.");
     } finally {
       setGenerating(false);
     }
@@ -90,7 +89,6 @@ export default function Step4Page() {
 
   async function adopt(id: string) {
     setAdopting(id);
-    setError(null);
     try {
       const mc = await apiClient.post<MiraClass>(
         `/v1/mentors/applications/me/class-suggestions/${id}/adopt`,
@@ -98,13 +96,12 @@ export default function Step4Page() {
       );
       router.push(`/mentors/apply/step-5?class_id=${mc.id}`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Adoption impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Adoption impossible.");
       setAdopting(null);
     }
   }
 
   async function reject(id: string, reason: string) {
-    setError(null);
     try {
       await apiClient.post(
         `/v1/mentors/applications/me/class-suggestions/${id}/reject`,
@@ -112,13 +109,12 @@ export default function Step4Page() {
       );
       setSuggestions(suggestions.filter((s) => s.id !== id));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Rejet impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Rejet impossible.");
     }
   }
 
   async function createManual() {
     if (!manualTitle.trim()) return;
-    setError(null);
     try {
       const mc = await apiClient.post<MiraClass>(
         "/v1/mentors/applications/me/classes",
@@ -132,7 +128,7 @@ export default function Step4Page() {
       );
       router.push(`/mentors/apply/step-5?class_id=${mc.id}`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Création impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Création impossible.");
     }
   }
 
@@ -142,12 +138,11 @@ export default function Step4Page() {
     );
     if (!ok) return;
     setDeletingId(classId);
-    setError(null);
     try {
       await apiClient.delete(`/v1/mentors/applications/me/classes/${classId}`);
       setExistingClasses((prev) => prev.filter((c) => c.id !== classId));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Suppression impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Suppression impossible.");
     } finally {
       setDeletingId(null);
     }
@@ -158,7 +153,7 @@ export default function Step4Page() {
       // Hub : l’utilisateur a fini d’ajouter / ajuster ses classes → récap (étape 7)
       router.push("/mentors/apply/step-7");
     } else {
-      setError("Adopte une suggestion ou crée ta propre Mira Class avant de continuer.");
+      toast.error("Adopte une suggestion ou crée ta propre Mira Class avant de continuer.");
     }
   }
 
@@ -173,8 +168,6 @@ export default function Step4Page() {
         }
         subtitle="D'après tes skills et la demande des nomades, voici 3 sujets de Mira Class à fort potentiel."
       />
-      <ErrorBanner message={error} />
-
       <Suspense fallback={null}>
         <AfterStep6Banner />
       </Suspense>

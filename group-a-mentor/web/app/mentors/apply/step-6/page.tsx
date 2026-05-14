@@ -3,11 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { FieldRow } from "@/components/wizard/FieldRow";
 import { MiraCard } from "@/components/mira/MiraCard";
 import { Stat } from "@/components/mira/Stat";
@@ -48,7 +49,6 @@ function Step6Inner() {
   const [capacity, setCapacity] = useState(6);
   const [sim, setSim] = useState<RevenueSimulationResult | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!classId) {
@@ -73,7 +73,7 @@ function Step6Inner() {
           setRateIndividual(Math.round(cls.recommended_price_per_hour_individual_cents / 100));
         }
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."));
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."));
   }, [classId, router]);
 
   useEffect(() => {
@@ -104,7 +104,6 @@ function Step6Inner() {
   async function handleContinue() {
     if (!classId || !mc) return;
     setSaving(true);
-    setError(null);
     try {
       await apiClient.patch(`/v1/mentors/applications/me/classes/${classId}`, {
         recommended_price_per_hour_collective_cents: rateCollective * 100,
@@ -112,7 +111,7 @@ function Step6Inner() {
       });
       router.push("/mentors/apply/step-4?from=step-6");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
       setSaving(false);
     }
   }
@@ -132,8 +131,6 @@ function Step6Inner() {
         }
         subtitle={hint ?? undefined}
       />
-      <ErrorBanner message={error} />
-
       <section className="grid gap-5 md:grid-cols-3">
         <FieldRow label="€ / heure collective">
           <Input

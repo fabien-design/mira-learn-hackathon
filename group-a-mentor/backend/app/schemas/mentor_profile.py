@@ -9,6 +9,9 @@ MentorProfileStatus = Literal["active", "paused", "archived"]
 
 
 class ProfessionalExperience(BaseModel):
+    # HACKATHON: duplicate of ProfessionalExperience in schemas/mentor_application.py.
+    # Identified by code review — skipped due to hackathon timeline.
+    # Fix post-hackathon: extract to schemas/shared.py and import from both.
     role: str = Field(..., max_length=120)
     company: str = Field(..., max_length=120)
     start_year: int = Field(..., ge=1970, le=2030)

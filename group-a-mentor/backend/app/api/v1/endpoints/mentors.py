@@ -33,6 +33,9 @@ async def list_mentors(
         MentorProfile.deleted_at.is_(None),
     )
     if search:
+        # HACKATHON: ILIKE on unindexed display_name/headline columns — full table scan.
+        # Identified by code review — skipped due to hackathon scale (~20 profiles).
+        # Fix post-hackathon: add GIN trigram indexes (pg_trgm) on both columns.
         q = q.where(
             MentorProfile.display_name.ilike(f"%{search}%")
             | MentorProfile.headline.ilike(f"%{search}%")

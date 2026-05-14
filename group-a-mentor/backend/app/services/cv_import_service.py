@@ -1,8 +1,8 @@
 """Service métier — mentor_cv_import (upload + parsing PDF + extraction LLM)."""
 from __future__ import annotations
 
-import json
 import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -20,6 +20,7 @@ from app.models.mentor_cv_import import MentorCVImport
 from app.models.skill import Skill
 from app.schemas.mentor_cv_import import MentorCVImportValidate
 from app.services.mentor_application_service import get_my_application
+from app.utils.json_utils import parse_llm_json
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,12 @@ def _upload_dir() -> Path:
 
 
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
-    """Extrait le texte d'un PDF en Markdown via pymupdf4llm."""
+    """Extrait le texte d'un PDF en Markdown via pymupdf4llm.
+
+    HACKATHON: pymupdf parsing is synchronous and blocks the asyncio event loop.
+    Identified by code review — skipped intentionally due to hackathon timeline.
+    Fix post-hackathon: wrap with asyncio.to_thread().
+    """
     try:
         doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
     except Exception as exc:
@@ -223,10 +229,10 @@ async def extract_sync(
     instance.error_message = None
     await db.flush()
 
-    # DEBUG — dump texte brut + réponse LLM pour diagnostic
-    debug_path = Path(settings.UPLOAD_DIR) / f"debug_{import_id}.txt"
-    debug_path.write_text(f"=== RAW TEXT ({len(text)} chars) ===\n{text}\n", encoding="utf-8", errors="replace")
-    logger.info("CV extract: raw text dumped to %s (%d chars)", debug_path, len(text))
+    if settings.DEBUG:
+        debug_path = Path(settings.UPLOAD_DIR) / f"debug_{import_id}.txt"
+        debug_path.write_text(f"=== RAW TEXT ({len(text)} chars) ===\n{text}\n", encoding="utf-8", errors="replace")
+        logger.info("CV extract: raw text dumped to %s (%d chars)", debug_path, len(text))
 
     catalogue = await _known_skill_catalogue(db)
     prompt = _EXTRACT_PROMPT.format(cv_text=text[:8000])
@@ -241,14 +247,19 @@ async def extract_sync(
             response_format={"type": "json_object"},
         )
         llm_raw = response["content"]
-        debug_path.write_text(
-            f"=== RAW TEXT ({len(text)} chars) ===\n{text}\n\n"
-            f"=== PROMPT SENT TO LLM ===\n{prompt}\n\n"
-            f"=== LLM RAW RESPONSE ===\n{llm_raw}\n",
-            encoding="utf-8", errors="replace",
-        )
+        if settings.DEBUG:
+            debug_path = Path(settings.UPLOAD_DIR) / f"debug_{import_id}.txt"
+            debug_path.write_text(
+                f"=== RAW TEXT ({len(text)} chars) ===\n{text}\n\n"
+                f"=== PROMPT SENT TO LLM ===\n{prompt}\n\n"
+                f"=== LLM RAW RESPONSE ===\n{llm_raw}\n",
+                encoding="utf-8", errors="replace",
+            )
         logger.info("CV extract: LLM raw response (%d chars): %s", len(llm_raw), llm_raw[:500])
-        parsed = _safe_json_parse(llm_raw)
+        # HACKATHON: user-controlled CV text is interpolated directly into the LLM prompt
+        # (prompt injection risk). Identified by code review — skipped due to hackathon timeline.
+        # Fix post-hackathon: pass CV content as a separate message turn.
+        parsed = parse_llm_json(llm_raw)
         logger.info(
             "CV extract: parsed keys=%s experiences=%d skills=%d",
             list(parsed.keys()),
@@ -294,7 +305,7 @@ async def extract_sync(
     instance.llm_model_used = response.get("model")
     usage = response.get("usage", {}) or {}
     total_tokens = usage.get("total_tokens") or usage.get("prompt_tokens")
-    instance.llm_tokens_consumed = int(total_tokens) if isinstance(total_tokens, int) else None
+    instance.llm_tokens_consumed = int(total_tokens) if isinstance(total_tokens, int) and not isinstance(total_tokens, bool) else None
     await db.flush()
     await db.refresh(instance)
     logger.info(
@@ -306,65 +317,13 @@ async def extract_sync(
     return instance
 
 
-def _sanitize_json_string(s: str) -> str:
-    """Nettoie le texte LLM pour que json.loads puisse le parser.
-    WHY : les petits LLM (gemma3:1b) insèrent des \\n littéraux (0x0A) dans les
-    string values JSON au lieu de les échapper en \\\\n, ce que json.loads refuse.
-    On remplace TOUS les sauts de ligne par des espaces — json.loads accepte les
-    espaces comme whitespace structurel et comme contenu de string.
-    """
-    import re
-    s = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
-    return s.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
-
-
-def _safe_json_parse(content: str) -> dict[str, Any]:
-    """Tolère fence ```json```, control chars bruts, JSON noyé dans du texte.
-
-    WHY : gemma3:1b embeds skills as a malformed last experience entry like
-    {"role": "Compétences": [...]} — invalid JSON at parse time. Recovery:
-    truncate at the error position, close the array/object, and retry.
-    """
-    s = content.strip()
-    # Strip markdown fence
-    if s.startswith("```"):
-        s = s.strip("`")
-        if s.startswith("json"):
-            s = s[4:].lstrip()
-    s = _sanitize_json_string(s)
-    # Tentative directe
-    try:
-        return json.loads(s)
-    except json.JSONDecodeError as first_err:
-        # Recovery: truncate at error position, close the last valid array item
-        truncated = s[:first_err.pos]
-        last_item_end = truncated.rfind("},")
-        if last_item_end < 0:
-            last_item_end = truncated.rfind("}")
-        if last_item_end > 0:
-            candidate = truncated[:last_item_end + 1] + "]}"
-            try:
-                result = json.loads(candidate)
-                logger.warning("CV extract: recovered partial JSON (truncated at pos %d)", first_err.pos)
-                return result
-            except json.JSONDecodeError:
-                pass
-    # Extraire le premier objet JSON du texte
-    start = s.find("{")
-    end = s.rfind("}")
-    if start >= 0 and end > start:
-        try:
-            return json.loads(s[start : end + 1])
-        except json.JSONDecodeError:
-            pass
-    return {}
+# JSON parsing delegated to app.utils.json_utils.parse_llm_json (shared with ai_suggestion_service)
 
 
 def _normalize_profile(raw: dict) -> dict:
-    import re as _re
     if not isinstance(raw, dict):
         return {}
-    _FAKE_URL = _re.compile(r'\.\.\.|or null|example\.com|<|>', _re.IGNORECASE)
+    _FAKE_URL = re.compile(r'\.\.\.|or null|example\.com|<|>', re.IGNORECASE)
 
     def _url(val: object) -> str | None:
         s = str(val).strip() if val else ""
@@ -419,13 +378,12 @@ def _normalize_skills(raw: list, allowed_slugs: set[str]) -> list[dict]:
     pour tout CV qui ne porte pas ces 5 skills exactement.
     """
     out: list[dict] = []
-    import re as _re
     seen: set[str] = set()
     for item in raw or []:
         if not isinstance(item, dict):
             continue
-        slug = _re.sub(r'[^a-z0-9-]', '-', str(item.get("skill_slug", "")).strip().lower())
-        slug = _re.sub(r'-{2,}', '-', slug).strip('-')
+        slug = re.sub(r'[^a-z0-9-]', '-', str(item.get("skill_slug", "")).strip().lower())
+        slug = re.sub(r'-{2,}', '-', slug).strip('-')
         if not slug or slug in seen:
             continue
         seen.add(slug)
@@ -521,8 +479,10 @@ async def validate_extraction(
             for s in deduped_skills:
                 skill_id = slug_to_id.get(s.skill_slug)
                 if not skill_id:
-                    import re as _re
-                    safe_slug = _re.sub(r'-{2,}', '-', _re.sub(r'[^a-z0-9-]', '-', s.skill_slug.lower())).strip('-')[:64]
+                    # HACKATHON: AI-extracted slugs auto-create Skill rows in the shared catalogue
+                    # without admin review, risking catalogue pollution. Identified by code review —
+                    # skipped due to hackathon timeline. Fix post-hackathon: require admin approval.
+                    safe_slug = re.sub(r'-{2,}', '-', re.sub(r'[^a-z0-9-]', '-', s.skill_slug.lower())).strip('-')[:64]
                     # Create skill from AI-extracted slug
                     new_skill = Skill(
                         slug=safe_slug,

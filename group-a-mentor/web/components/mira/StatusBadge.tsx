@@ -10,15 +10,15 @@ export const STATUS_LABEL: Record<ApplicationStatus, string> = {
 };
 
 const STATUS_STYLE: Record<ApplicationStatus, string> = {
-  draft: "bg-[color:var(--status-draft-bg)] text-[color:var(--status-draft-fg)]",
+  draft: "bg-(--status-draft-bg) text-(--status-draft-fg)",
   submitted:
-    "bg-[color:var(--status-submitted-bg)] text-[color:var(--status-submitted-fg)]",
+    "bg-(--status-submitted-bg) text-(--status-submitted-fg)",
   in_review:
-    "bg-[color:var(--status-inreview-bg)] text-[color:var(--status-inreview-fg)]",
+    "bg-(--status-inreview-bg) text-(--status-inreview-fg)",
   validated:
-    "bg-[color:var(--status-validated-bg)] text-[color:var(--status-validated-fg)]",
+    "bg-(--status-validated-bg) text-(--status-validated-fg)",
   rejected:
-    "bg-[color:var(--status-rejected-bg)] text-[color:var(--status-rejected-fg)]",
+    "bg-(--status-rejected-bg) text-(--status-rejected-fg)",
 };
 
 interface StatusBadgeProps {

@@ -1,7 +1,6 @@
 """Service métier — suggestions IA de Mira Classes (étape 4)."""
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -20,6 +19,7 @@ from app.models.mira_class_module_outline import MiraClassModuleOutline
 from app.models.skill import Skill
 from app.models.skill_demand_aggregate import SkillDemandAggregate
 from app.services.mentor_application_service import get_my_application
+from app.utils.json_utils import parse_llm_json
 
 logger = logging.getLogger(__name__)
 
@@ -125,23 +125,7 @@ async def _gather_context(db: AsyncSession, application: MentorApplication) -> d
     }
 
 
-def _safe_json(content: str) -> dict[str, Any]:
-    s = content.strip()
-    if s.startswith("```"):
-        s = s.strip("`")
-        if s.startswith("json"):
-            s = s[4:].lstrip()
-    try:
-        return json.loads(s)
-    except json.JSONDecodeError:
-        start = s.find("{")
-        end = s.rfind("}")
-        if start >= 0 and end > start:
-            try:
-                return json.loads(s[start : end + 1])
-            except json.JSONDecodeError:
-                return {}
-        return {}
+# JSON parsing delegated to app.utils.json_utils.parse_llm_json (shared with cv_import_service)
 
 
 async def generate(
@@ -216,7 +200,7 @@ async def generate(
     except AppException:
         raise
 
-    parsed = _safe_json(response["content"])
+    parsed = parse_llm_json(response["content"])
     raw_list = parsed.get("suggestions", []) if isinstance(parsed, dict) else []
     if not isinstance(raw_list, list):
         raw_list = []
@@ -228,6 +212,23 @@ async def generate(
     model_used = response.get("model") or "unknown"
     usage = response.get("usage", {}) or {}
     total_tokens = usage.get("total_tokens") or usage.get("prompt_tokens")
+
+    # Bulk-fetch gap data for any skill_id not already in gap_lookup, avoiding N+1 queries.
+    missing_sids: set[str] = {
+        sid
+        for raw in raw_list[:count]
+        if isinstance(raw, dict)
+        for sid in (raw.get("skill_ids") or [])
+        if isinstance(sid, str) and sid in known_skill_ids and sid not in gap_lookup
+    }
+    if missing_sids:
+        extra_rows = (
+            await db.execute(
+                select(SkillDemandAggregate).where(SkillDemandAggregate.skill_id.in_(missing_sids))
+            )
+        ).scalars().all()
+        for row in extra_rows:
+            gap_lookup[row.skill_id] = row
 
     for raw in raw_list[:count]:
         if not isinstance(raw, dict):
@@ -243,19 +244,10 @@ async def generate(
         gap_total = 0.0
         for sid in skill_ids:
             g = gap_lookup.get(sid)
-            if g is None:
-                # Skill pas dans le top-10 ; on prend ses stats si dispo en base
-                row = (
-                    await db.execute(
-                        select(SkillDemandAggregate).where(SkillDemandAggregate.skill_id == sid)
-                    )
-                ).scalar_one_or_none()
-                if row:
-                    students_total += row.students_wanting_count
-                    gap_total += float(row.gap_score)
-            else:
+            if g is not None:
                 students_total += g.students_wanting_count
                 gap_total += float(g.gap_score)
+            # else: no demand data for this skill — skip (already bulk-fetched above)
 
         fmt = raw.get("format")
         if fmt not in ("physical", "virtual", "both"):
@@ -297,7 +289,7 @@ async def generate(
             suggested_description=str(raw.get("description", ""))[:10000],
             suggested_skill_ids=skill_ids,
             suggested_outline=outline_clean,
-            suggested_total_hours=int(raw.get("total_hours") or 0) if str(raw.get("total_hours", "0")).isdigit() else 0,
+            suggested_total_hours=max(0, int(float(raw.get("total_hours") or 0))) if raw.get("total_hours") is not None else 0,
             suggested_format=fmt,
             justification=str(raw.get("justification", ""))[:2000] or "Suggestion IA",
             skill_demand_score=Decimal(str(round(students_total, 2))),

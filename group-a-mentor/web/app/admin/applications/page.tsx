@@ -99,7 +99,7 @@ export default function AdminApplicationsListPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-error/30 bg-error/[0.08] px-4 py-3 text-sm text-error">
+        <div className="rounded-xl border border-error/30 bg-error/8 px-4 py-3 text-sm text-error">
           {error}
         </div>
       )}

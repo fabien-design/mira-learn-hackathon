@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { Eyebrow } from "@/components/mira/Eyebrow";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { MiraCard } from "@/components/mira/MiraCard";
@@ -31,7 +32,6 @@ export default function Step7Page() {
   const [acceptConditions, setAcceptConditions] = useState(false);
   const [acceptSincerity, setAcceptSincerity] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -57,7 +57,7 @@ export default function Step7Page() {
 
   useEffect(() => {
     loadData()
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."))
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."))
       .finally(() => setLoading(false));
   }, [loadData]);
 
@@ -67,12 +67,11 @@ export default function Step7Page() {
     );
     if (!ok) return;
     setDeletingId(classId);
-    setError(null);
     try {
       await apiClient.delete(`/v1/mentors/applications/me/classes/${classId}`);
       await loadData();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Suppression impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Suppression impossible.");
     } finally {
       setDeletingId(null);
     }
@@ -81,12 +80,11 @@ export default function Step7Page() {
   async function handleSubmit() {
     if (!acceptConditions || !acceptSincerity || submitting) return;
     setSubmitting(true);
-    setError(null);
     try {
       await apiClient.post("/v1/mentors/applications/me/submit");
       router.push("/me/application");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Soumission impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Soumission impossible.");
       setSubmitting(false);
     }
   }
@@ -117,15 +115,13 @@ export default function Step7Page() {
           </>
         }
       />
-      <ErrorBanner message={error} />
-
       <section className="grid gap-4 md:grid-cols-2">
         <MiraCard>
           <Eyebrow>Identité</Eyebrow>
           <p className="mt-2 text-base font-semibold text-charcoal">
             {app?.first_name} {app?.last_name}
           </p>
-          {app?.nomad_since_year !== null && (
+          {app?.nomad_since_year != null && (
             <p className="mt-0.5 text-sm text-muted-foreground">
               Nomade depuis {app?.nomad_since_year}
             </p>

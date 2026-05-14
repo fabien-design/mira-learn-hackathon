@@ -67,6 +67,9 @@ async def _decode_jwt(token: str) -> dict[str, Any]:
     # WHY : en dev local, Supabase JWKS n'est pas forcément accessible.
     # On extrait les claims sans vérifier la signature — acceptable en développement.
     if settings.ENVIRONMENT == "development":
+        # HACKATHON: JWT signature not verified in development mode.
+        # Identified by code review — skipped intentionally: Supabase JWKS is not
+        # always reachable in local dev. Must be enabled before staging/production deploy.
         try:
             return jwt.get_unverified_claims(token)
         except JWTError as exc:
@@ -189,8 +192,11 @@ async def require_auth(authorization: str = Header(...)) -> AuthenticatedUser:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: no sub claim")
 
     email = payload.get("email")
+    # WHY: prefer app_metadata (server-side, not user-writable). Fall back to user_metadata
+    # for hackathon seed users where role was seeded there instead.
+    app_metadata = payload.get("app_metadata", {}) or {}
     user_metadata = payload.get("user_metadata", {}) or {}
-    role = user_metadata.get("role", "nomad")
+    role = app_metadata.get("role") or user_metadata.get("role", "nomad")
 
     if role not in ("nomad", "mentor", "admin"):
         logger.warning("Unknown role %r in JWT for user %s, defaulting to nomad", role, user_id)

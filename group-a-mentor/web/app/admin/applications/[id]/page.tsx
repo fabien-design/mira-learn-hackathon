@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { DecisionBlock } from "@/components/mira/DecisionBlock";
 import { Eyebrow } from "@/components/mira/Eyebrow";
@@ -38,7 +40,6 @@ export default function AdminApplicationDetailPage() {
   const [skills, setSkills] = useState<ApplicationSkill[]>([]);
   const [skillsCatalogue, setSkillsCatalogue] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [decisionReason, setDecisionReason] = useState("");
   const [classDecisions, setClassDecisions] = useState<Map<string, ClassDecision>>(
     new Map(),
@@ -66,7 +67,7 @@ export default function AdminApplicationDetailPage() {
         }
         setClassDecisions(defaults);
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."))
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -82,7 +83,6 @@ export default function AdminApplicationDetailPage() {
   async function decide(decision: "validated" | "rejected" | "in_review") {
     if (!id) return;
     setSubmitting(decision);
-    setError(null);
     const body: Record<string, unknown> = {
       decision,
       decision_reason: decisionReason || null,
@@ -94,7 +94,7 @@ export default function AdminApplicationDetailPage() {
       await apiClient.post(`/v1/admin/mentors/applications/${id}/review`, body);
       router.push("/admin/applications");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Décision impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Décision impossible.");
       setSubmitting(null);
     }
   }
@@ -121,12 +121,6 @@ export default function AdminApplicationDetailPage() {
       >
         <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} /> Toutes les candidatures
       </Link>
-
-      {error && (
-        <div className="rounded-xl border border-error/30 bg-error/[0.08] px-4 py-3 text-sm text-error">
-          {error}
-        </div>
-      )}
 
       <div className="flex items-center gap-5">
         <MiraAvatar name={fullName} size={72} />
@@ -209,7 +203,7 @@ export default function AdminApplicationDetailPage() {
       {app.motivation && (
         <section>
           <Eyebrow className="mb-2">Motivation</Eyebrow>
-          <blockquote className="max-w-3xl rounded-r-xl border-l-[3px] border-mira-red bg-mira-red/[0.04] py-3.5 pl-5 pr-4 font-serif text-[17px] italic leading-relaxed text-charcoal">
+          <blockquote className="max-w-3xl rounded-r-xl border-l-[3px] border-mira-red bg-mira-red/4 py-3.5 pl-5 pr-4 font-serif text-[17px] italic leading-relaxed text-charcoal">
             "{app.motivation}"
           </blockquote>
         </section>

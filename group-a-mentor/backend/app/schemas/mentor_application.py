@@ -7,7 +7,12 @@ ApplicationStatus = Literal["draft", "submitted", "in_review", "validated", "rej
 
 
 class ProfessionalExperience(BaseModel):
-    """Une étape du parcours professionnel."""
+    """Une étape du parcours professionnel.
+
+    HACKATHON: duplicate of ProfessionalExperience in schemas/mentor_profile.py.
+    Identified by code review — skipped due to hackathon timeline.
+    Fix post-hackathon: extract to schemas/shared.py and import from both.
+    """
 
     role: str = Field(..., max_length=120)
     company: str = Field(..., max_length=120)

@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.config import settings
 
@@ -34,6 +34,19 @@ class MiraClassBase(BaseModel):
     target_cities: list[TargetCity] = []
     recommended_price_per_hour_collective_cents: int = Field(default=0, ge=0)
     recommended_price_per_hour_individual_cents: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def _check_total_hours(self) -> "MiraClassBase":
+        # Only validate when total_hours is explicitly provided (non-zero).
+        # Allows partial saves where only collective/individual are set first.
+        if self.total_hours > 0:
+            expected = self.total_hours_collective + self.total_hours_individual
+            if self.total_hours != expected:
+                raise ValueError(
+                    f"total_hours ({self.total_hours}) doit être égal à "
+                    f"total_hours_collective + total_hours_individual ({expected})"
+                )
+        return self
 
 
 class MiraClassCreate(MiraClassBase):

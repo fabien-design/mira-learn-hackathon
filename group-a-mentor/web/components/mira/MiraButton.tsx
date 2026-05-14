@@ -18,7 +18,7 @@ const VARIANT_CLASSES: Record<MiraButtonVariant, string> = {
   secondary:
     "bg-card text-charcoal border-muted-soft hover:border-charcoal",
   ghost:
-    "bg-transparent text-mira-red border-transparent hover:bg-mira-red/[0.06]",
+    "bg-transparent text-mira-red border-transparent hover:bg-mira-red/6",
   destructive:
     "bg-error text-white border-transparent hover:bg-[#DC2626]",
 };

@@ -25,7 +25,7 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
         const active = n === currentStep;
         return (
           <Fragment key={label}>
-            <div className="flex flex-shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <span
                 className={cn(
                   "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-colors",
