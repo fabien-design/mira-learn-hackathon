@@ -17,8 +17,10 @@ async def list_for_user(
     app = await get_my_application(db, user_id)
     if not app:
         return []
-    stmt = select(MentorApplicationSkill).where(
-        MentorApplicationSkill.application_id == app.id
+    stmt = (
+        select(MentorApplicationSkill)
+        .where(MentorApplicationSkill.application_id == app.id)
+        .order_by(MentorApplicationSkill.is_primary.desc())
     )
     return list((await db.execute(stmt)).scalars().all())
 

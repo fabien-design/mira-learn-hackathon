@@ -134,10 +134,10 @@ export default function Step7Page() {
         <MiraCard>
           <Eyebrow>Skills ({skills.length})</Eyebrow>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {skills.map((s, i) => (
+            {skills.map((s) => (
               <SkillChip
                 key={s.id}
-                primary={i < 3}
+                primary={s.is_primary}
                 label={`${skillsById.get(s.skill_id)?.name ?? s.skill_id} · ${s.level}`}
               />
             ))}

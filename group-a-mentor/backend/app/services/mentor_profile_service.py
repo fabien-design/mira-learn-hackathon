@@ -72,16 +72,8 @@ async def create_from_application(
         )
     ).scalars().all()
 
-    # Top 3 expert/advanced en primary (ordre = ordre d'apparition)
-    primary_quota = 3
-    primaries_picked = 0
     for idx, app_skill in enumerate(app_skills):
-        is_primary = (
-            primaries_picked < primary_quota
-            and app_skill.level in ("expert", "advanced")
-        )
-        if is_primary:
-            primaries_picked += 1
+        is_primary = app_skill.is_primary
         db.add(
             MentorProfileSkill(
                 profile_id=profile.id,
