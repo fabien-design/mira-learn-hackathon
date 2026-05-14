@@ -181,7 +181,7 @@ function DirectoryInner() {
             </div>
           )}
           {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3">
               <Skeleton className="h-60 rounded-2xl" />
               <Skeleton className="h-60 rounded-2xl" />
               <Skeleton className="h-60 rounded-2xl" />
@@ -192,7 +192,7 @@ function DirectoryInner() {
               description="Essaie une autre skill ou réinitialise les filtres."
             />
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3">
               {mentors.map((m) => (
                 <MentorCard key={m.id} mentor={m} />
               ))}

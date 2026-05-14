@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { Menu } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 import { MiraLogo } from "./Logo";
 import { NavUserMenu } from "./NavUserMenu";
@@ -16,6 +27,7 @@ const SECTIONS = [
 
 export function AdminNav() {
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="border-b border-rule bg-card">
@@ -23,7 +35,9 @@ export function AdminNav() {
         <Link href="/admin/applications" className="shrink-0">
           <MiraLogo admin />
         </Link>
-        <nav className="ml-2 flex gap-1.5">
+
+        {/* Desktop nav */}
+        <nav className="ml-2 hidden gap-1.5 md:flex">
           {SECTIONS.map((s) => (
             <Link
               key={s.label}
@@ -38,7 +52,9 @@ export function AdminNav() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
+
+        {/* Desktop right */}
+        <div className="ml-auto hidden items-center gap-3 md:flex">
           <Link
             href="/mentors"
             className="text-[13px] font-medium text-muted-foreground hover:text-charcoal"
@@ -50,6 +66,56 @@ export function AdminNav() {
               <NavUserMenu email={user.email} isAdmin />
             </div>
           )}
+        </div>
+
+        {/* Mobile right */}
+        <div className="ml-auto flex items-center gap-2 md:hidden">
+          {user?.email && <NavUserMenu email={user.email} isAdmin />}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button
+                aria-label="Ouvrir le menu admin"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-charcoal transition-colors hover:bg-warm-beige"
+              >
+                <Menu className="h-4.5 w-4.5" strokeWidth={1.8} />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle asChild>
+                  <span>
+                    <MiraLogo admin />
+                  </span>
+                </SheetTitle>
+              </SheetHeader>
+
+              <nav className="flex flex-col gap-1 px-4 py-2">
+                {SECTIONS.map((s) => (
+                  <SheetClose asChild key={s.label}>
+                    <Link
+                      href={s.href}
+                      className={cn(
+                        "rounded-lg px-3 py-3 text-[15px] font-medium transition-colors",
+                        s.active
+                          ? "bg-warm-beige font-semibold text-charcoal"
+                          : "text-muted-foreground hover:bg-warm-beige hover:text-charcoal",
+                      )}
+                    >
+                      {s.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+                <SheetClose asChild>
+                  <Link
+                    href="/mentors"
+                    className="rounded-lg px-3 py-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-warm-beige hover:text-charcoal"
+                  >
+                    ↗ Voir le site public
+                  </Link>
+                </SheetClose>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </div>

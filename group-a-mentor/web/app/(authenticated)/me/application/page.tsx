@@ -69,19 +69,34 @@ function SummaryRow({
   locked?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "grid items-center gap-4 border-b border-rule py-3.5",
-        locked ? "grid-cols-[150px_1fr_auto]" : "grid-cols-[150px_1fr]",
-      )}
-    >
-      <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm text-charcoal">{value}</span>
-      {locked ? (
-        <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground">
-          <Lock className="h-3 w-3" strokeWidth={2} /> Verrouillé
-        </span>
-      ) : null}
+    <div className="border-b border-rule py-3.5">
+      {/* Mobile: stacked label + value/lock row */}
+      <div className="flex items-start justify-between gap-3 sm:hidden">
+        <div className="min-w-0 flex-1">
+          <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
+          <p className="mt-0.5 text-sm text-charcoal">{value}</p>
+        </div>
+        {locked && (
+          <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+            <Lock className="h-3 w-3" strokeWidth={2} /> Verrouillé
+          </span>
+        )}
+      </div>
+      {/* Desktop: fixed-width grid */}
+      <div
+        className={cn(
+          "hidden items-center gap-4 sm:grid",
+          locked ? "grid-cols-[150px_1fr_auto]" : "grid-cols-[150px_1fr]",
+        )}
+      >
+        <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
+        <span className="text-sm text-charcoal">{value}</span>
+        {locked && (
+          <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground">
+            <Lock className="h-3 w-3" strokeWidth={2} /> Verrouillé
+          </span>
+        )}
+      </div>
     </div>
   );
 }

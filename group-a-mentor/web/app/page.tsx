@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <SmartNav />
-      <main className="mx-auto w-full max-w-[1320px] px-6 pb-24 pt-24 md:px-8">
+      <main className="mx-auto w-full max-w-330 px-6 pb-24 pt-24 md:px-8">
         <div className="max-w-3xl">
           <Eyebrow>Mira Learn · pour les digital nomads francophones</Eyebrow>
           <h1 className="mt-4 font-serif text-[clamp(2.75rem,6vw,4.5rem)] font-medium leading-[1.05] tracking-tight text-charcoal">

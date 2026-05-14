@@ -74,7 +74,7 @@ export default function MentorDetailPage() {
           </MiraCard>
         ) : (
           <>
-            <section className="grid items-center gap-8 pb-14 md:grid-cols-[auto_1fr_auto]">
+            <section className="grid items-start gap-8 pb-14 md:grid-cols-[auto_1fr_auto] md:items-center">
               <MiraAvatar name={mentor.display_name} size={120} ring />
               <div>
                 <Eyebrow tone="accent" className="mb-2">
@@ -84,20 +84,46 @@ export default function MentorDetailPage() {
                   {mentor.display_name}
                 </SectionTitle>
                 <p className="mt-2.5 text-[18px] text-charcoal">{mentor.headline}</p>
-                <div className="mt-3.5 inline-flex items-center gap-4 text-[13px] text-muted-foreground">
+                <div className="mt-3.5 flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground">
                   <Stars
                     rating={mentor.aggregate_rating ? Number(mentor.aggregate_rating) : null}
                     count={mentor.rating_count}
                     classes={mentor.classes_given_count}
                   />
-                  <span className="h-0.5 w-0.5 rounded-full bg-muted-soft" aria-hidden />
+                  <span className="hidden h-0.5 w-0.5 rounded-full bg-muted-soft sm:block" aria-hidden />
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" strokeWidth={1.8} />
                     Worldwide
                   </span>
                 </div>
+                {/* Links on mobile — inline below meta */}
+                {(mentor.linkedin_url || mentor.website_url) && (
+                  <div className="mt-4 flex flex-wrap gap-2 md:hidden">
+                    {mentor.linkedin_url && (
+                      <MiraButton
+                        variant="secondary"
+                        size="sm"
+                        leadingIcon={<Link2 className="h-4 w-4" strokeWidth={1.8} />}
+                        onClick={() => window.open(mentor.linkedin_url!, "_blank", "noopener,noreferrer")}
+                      >
+                        LinkedIn
+                      </MiraButton>
+                    )}
+                    {mentor.website_url && (
+                      <MiraButton
+                        variant="secondary"
+                        size="sm"
+                        leadingIcon={<ExternalLink className="h-4 w-4" strokeWidth={1.8} />}
+                        onClick={() => window.open(mentor.website_url!, "_blank", "noopener,noreferrer")}
+                      >
+                        {mentor.website_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </MiraButton>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col gap-2.5 self-stretch justify-center">
+              {/* Links on desktop — sticky aside column */}
+              <div className="hidden flex-col gap-2.5 self-stretch justify-center md:flex">
                 {mentor.linkedin_url && (
                   <MiraButton
                     variant="secondary"

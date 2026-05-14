@@ -78,22 +78,24 @@ export default function AdminApplicationsListPage() {
         CV.
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Tabs
-          value={tab}
-          options={TAB_OPTIONS.map((t) => ({
-            ...t,
-            count: tab === t.value ? counts[t.value] : undefined,
-          }))}
-          onChange={(v) => setTab(v)}
-        />
-        <div className="relative ml-auto w-72">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="overflow-x-auto pb-0.5">
+          <Tabs
+            value={tab}
+            options={TAB_OPTIONS.map((t) => ({
+              ...t,
+              count: tab === t.value ? counts[t.value] : undefined,
+            }))}
+            onChange={(v) => setTab(v)}
+          />
+        </div>
+        <div className="relative w-full sm:ml-auto sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.8} />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un candidat…"
-            className="h-10 rounded-xl border-rule bg-card pl-9 text-sm focus-visible:border-mira-red focus-visible:ring-mira-red/15"
+            className="h-10 w-full rounded-xl border-rule bg-card pl-9 text-sm focus-visible:border-mira-red focus-visible:ring-mira-red/15"
           />
         </div>
       </div>

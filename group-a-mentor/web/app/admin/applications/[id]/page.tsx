@@ -122,10 +122,13 @@ export default function AdminApplicationDetailPage() {
         <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} /> Toutes les candidatures
       </Link>
 
-      <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-start gap-4">
         <MiraAvatar name={fullName} size={72} />
         <div className="min-w-0 flex-1">
-          <SectionTitle as="h1" size="page">{fullName}</SectionTitle>
+          <div className="flex flex-wrap items-center gap-3">
+            <SectionTitle as="h1" size="page" className="m-0">{fullName}</SectionTitle>
+            <StatusBadge status={app.status} />
+          </div>
           <p className="mt-1 text-base text-charcoal">
             {app.transmission_pitch || "—"}
           </p>
@@ -133,7 +136,6 @@ export default function AdminApplicationDetailPage() {
             Candidature reçue {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString("fr-FR") : "—"}
           </p>
         </div>
-        <StatusBadge status={app.status} />
       </div>
 
       <section>
