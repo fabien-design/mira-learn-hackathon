@@ -209,7 +209,7 @@ export function SkillPicker({
                       {skillsById.get(s.skill_id)?.name ?? s.skill_id}
                     </span>
                     {s.validated_via_cv_import && (
-                      <span className="rounded-full bg-mira-red/[0.08] px-2 py-0.5 text-[11px] font-semibold text-mira-red">
+                      <span className="rounded-full bg-mira-red/8 px-2 py-0.5 text-[11px] font-semibold text-mira-red">
                         ✨ CV
                       </span>
                     )}

@@ -197,7 +197,7 @@ export default function Step1Page() {
           )}
         </div>
         {priorClasses === "never" && (
-          <p className="mt-2 rounded-xl bg-mira-red/[0.05] px-4 py-3 text-sm leading-relaxed text-charcoal">
+          <p className="mt-2 rounded-xl bg-mira-red/5 px-4 py-3 text-sm leading-relaxed text-charcoal">
             Pas un souci — on t'accompagne pour ta première. La majorité de nos mentors
             n'avaient jamais enseigné avant Mira.
           </p>

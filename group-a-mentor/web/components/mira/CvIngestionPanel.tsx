@@ -41,7 +41,7 @@ export function CvIngestionPanel({
   }
   if (cv.status === "failed") {
     return (
-      <div className="mt-6 rounded-2xl border border-error/30 bg-error/[0.05] p-5">
+      <div className="mt-6 rounded-2xl border border-error/30 bg-error/5 p-5">
         <p className="text-sm font-semibold text-error">Extraction CV impossible</p>
         <p className="mt-1 text-sm text-muted-foreground">
           {cv.error_message ?? "Réessaie avec un autre fichier ou passe en manuel."}

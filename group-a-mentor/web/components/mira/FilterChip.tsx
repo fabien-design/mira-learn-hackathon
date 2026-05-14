@@ -16,7 +16,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
           "inline-flex h-9 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors",
           active
             ? "border-charcoal bg-charcoal text-white"
-            : "border-muted-soft bg-transparent text-charcoal hover:bg-black/[0.03]",
+            : "border-muted-soft bg-transparent text-charcoal hover:bg-black/3",
           className,
         )}
         {...rest}

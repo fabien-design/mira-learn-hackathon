@@ -22,7 +22,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--primary)] text-white hover:opacity-90",
+  primary: "bg-(--primary) text-white hover:opacity-90",
   outline: "border border-gray-300 bg-white hover:bg-gray-50",
   ghost: "hover:bg-gray-100",
   destructive: "bg-red-600 text-white hover:bg-red-700",

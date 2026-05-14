@@ -29,7 +29,7 @@ function DemandSignal({ gap, demand }: { gap: number; demand: number }) {
   const hot = gap > 30;
   const med = gap > 5;
   const Icon = hot ? Flame : med ? Users : Sprout;
-  const tone = hot ? "text-mira-red bg-mira-red/[0.08]" : med ? "text-gold bg-gold/[0.12]" : "text-muted-foreground bg-beige-deep";
+  const tone = hot ? "text-mira-red bg-mira-red/8" : med ? "text-gold bg-gold/12" : "text-muted-foreground bg-beige-deep";
   return (
     <span
       title={`Demand=${demand} · Gap=${gap}`}

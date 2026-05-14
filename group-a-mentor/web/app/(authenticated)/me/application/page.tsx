@@ -33,7 +33,7 @@ function ProgressTrack({ status }: { status: ApplicationStatus }) {
             key={s.id}
             className={cn(
               "rounded-xl border px-4 py-3",
-              active ? "border-mira-red bg-mira-red/[0.04]" : "border-rule bg-card",
+              active ? "border-mira-red bg-mira-red/4" : "border-rule bg-card",
             )}
           >
             <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function MyApplicationPage() {
       <div className="mx-auto w-full max-w-3xl px-6 py-10 md:px-8">
         {/* Success / status banner */}
         {app.status === "submitted" && (
-          <div className="mb-7 flex items-center gap-4 rounded-2xl border border-success/20 bg-gradient-to-br from-success/[0.05] to-sage-soft/40 px-6 py-5">
+          <div className="mb-7 flex items-center gap-4 rounded-2xl border border-success/20 bg-linear-to-br from-success/5 to-sage-soft/40 px-6 py-5">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-success text-white">
               <Check className="h-5 w-5" strokeWidth={2.6} />
             </span>
@@ -163,7 +163,7 @@ export default function MyApplicationPage() {
         )}
 
         {error && (
-          <div className="mb-4 rounded-xl border border-error/30 bg-error/[0.08] px-4 py-3 text-sm text-error">
+          <div className="mb-4 rounded-xl border border-error/30 bg-error/8 px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
@@ -179,7 +179,7 @@ export default function MyApplicationPage() {
         </p>
 
         {app.status === "rejected" && app.decision_reason && (
-          <MiraCard className="mt-6 border-error/30 bg-error/[0.04]">
+          <MiraCard className="mt-6 border-error/30 bg-error/4">
             <Eyebrow>Décision admin</Eyebrow>
             <p className="mt-2 text-sm leading-relaxed text-charcoal">
               {app.decision_reason}
@@ -202,7 +202,7 @@ export default function MyApplicationPage() {
                 href={app.status === "draft" ? "/mentors/apply/step-1" : "/mentors/apply/step-3"}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium transition-opacity hover:opacity-70",
-                  "bg-success/[0.08] text-success",
+                  "bg-success/8 text-success",
                 )}
               >
                 ✎ Éditable

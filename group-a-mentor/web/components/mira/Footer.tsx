@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="border-t border-black/5 bg-[color:var(--warm-beige)]">
+    <footer className="border-t border-black/5 bg-(--warm-beige)">
       <div className="mx-auto flex w-full max-w-[1320px] flex-wrap items-center justify-between gap-4 px-6 py-8 text-[12.5px] text-muted-foreground md:px-8">
         <span>© {new Date().getFullYear()} Hello Mira · Mira Learn</span>
         <nav className="flex gap-5">

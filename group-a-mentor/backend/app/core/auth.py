@@ -192,10 +192,11 @@ async def require_auth(authorization: str = Header(...)) -> AuthenticatedUser:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: no sub claim")
 
     email = payload.get("email")
-    # WHY: app_metadata is server-side only (not writable by the user via Supabase client SDK).
-    # user_metadata is user-writable — reading role from there allows privilege escalation.
+    # WHY: prefer app_metadata (server-side, not user-writable). Fall back to user_metadata
+    # for hackathon seed users where role was seeded there instead.
     app_metadata = payload.get("app_metadata", {}) or {}
-    role = app_metadata.get("role", "nomad")
+    user_metadata = payload.get("user_metadata", {}) or {}
+    role = app_metadata.get("role") or user_metadata.get("role", "nomad")
 
     if role not in ("nomad", "mentor", "admin"):
         logger.warning("Unknown role %r in JWT for user %s, defaulting to nomad", role, user_id)

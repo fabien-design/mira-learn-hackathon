@@ -24,7 +24,7 @@ function AfterStep6Banner() {
   return (
     <div
       role="status"
-      className="mb-6 rounded-xl border border-success/25 bg-success/[0.06] px-4 py-3 text-sm leading-relaxed text-charcoal"
+      className="mb-6 rounded-xl border border-success/25 bg-success/6 px-4 py-3 text-sm leading-relaxed text-charcoal"
     >
       Masterclass enregistrée. 
     </div>

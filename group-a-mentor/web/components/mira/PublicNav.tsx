@@ -20,7 +20,7 @@ export function PublicNav() {
   const isAdmin = user?.user_metadata?.role === "admin";
 
   return (
-    <div className="sticky top-0 z-40 border-b border-black/5 bg-[color:var(--warm-beige)]/85 backdrop-blur-md">
+    <div className="sticky top-0 z-40 border-b border-black/5 bg-(--warm-beige)/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1320px] items-center gap-9 px-6 md:px-8">
         <Link href="/" className="shrink-0">
           <MiraLogo />

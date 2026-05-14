@@ -41,7 +41,7 @@ export function ApplicationListRow({ application, cvImported, first }: Applicati
           <span className="text-[15px] font-semibold text-charcoal">{fullName}</span>
           <StatusBadge status={application.status} />
           {cvImported && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-mira-red/[0.08] px-2 py-0.5 text-[11px] font-semibold text-mira-red">
+            <span className="inline-flex items-center gap-1 rounded-full bg-mira-red/8 px-2 py-0.5 text-[11px] font-semibold text-mira-red">
               <Sparkles className="h-3 w-3" strokeWidth={2} /> CV importé
             </span>
           )}

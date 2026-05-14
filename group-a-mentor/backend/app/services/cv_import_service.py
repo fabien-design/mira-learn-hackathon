@@ -323,7 +323,7 @@ async def extract_sync(
 def _normalize_profile(raw: dict) -> dict:
     if not isinstance(raw, dict):
         return {}
-    _FAKE_URL = _re.compile(r'\.\.\.|or null|example\.com|<|>', _re.IGNORECASE)
+    _FAKE_URL = re.compile(r'\.\.\.|or null|example\.com|<|>', re.IGNORECASE)
 
     def _url(val: object) -> str | None:
         s = str(val).strip() if val else ""

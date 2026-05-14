@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ArrowDownWideNarrow, Plus, Minus } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/api-client";
 import { EmptyState } from "@/components/mira/EmptyState";
@@ -13,6 +13,7 @@ import { Footer } from "@/components/mira/Footer";
 import { MentorCard } from "@/components/mira/MentorCard";
 import { MiraButton } from "@/components/mira/MiraButton";
 import { SmartNav } from "@/components/mira/SmartNav";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MentorProfilePublic, Skill } from "@/types/mentor";
 
@@ -40,6 +41,7 @@ function DirectoryInner() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAllSkills, setShowAllSkills] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -123,7 +125,7 @@ function DirectoryInner() {
             >
               Tout
             </FilterChip>
-            {popularSkills.map((s) => (
+            {(showAllSkills ? skills.slice().sort((a, b) => b.popularity_score - a.popularity_score) : popularSkills).map((s) => (
               <FilterChip
                 key={s.id}
                 active={skillFilter === s.id}
@@ -132,26 +134,39 @@ function DirectoryInner() {
                 {s.name}
               </FilterChip>
             ))}
+            {!showAllSkills && skills.length > popularSkills.length && (
+              <FilterChip
+                onClick={() => setShowAllSkills(true)}
+                className="gap-1"
+              >
+                <Plus className="h-3 w-3" strokeWidth={2.5} />
+                {skills.length - popularSkills.length}
+              </FilterChip>
+            )}
+            {showAllSkills && (
+              <FilterChip
+                onClick={() => setShowAllSkills(false)}
+                className="gap-1"
+              >
+                <Minus className="h-3 w-3" strokeWidth={2.5} />
+                Moins
+              </FilterChip>
+            )}
           </div>
           <div className="ml-auto inline-flex items-center gap-2 text-[13px] text-muted-foreground">
-            <span>Tri</span>
-            <div className="relative">
-              <select
-                value={sort}
-                onChange={(e) => updateQuery({ sort: e.target.value })}
-                className="h-9 appearance-none rounded-lg border border-rule bg-card pl-3 pr-9 text-[13px] font-medium text-charcoal focus:border-mira-red focus:outline-none focus:ring-2 focus:ring-mira-red/15"
-              >
+            <ArrowDownWideNarrow className="w-4" />
+            <Select value={sort} onValueChange={(v) => updateQuery({ sort: v })}>
+              <SelectTrigger className="h-9 rounded-lg border-rule bg-card text-[13px] font-medium text-charcoal focus:border-mira-red focus:ring-mira-red/15">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
                 {SORTS.map((s) => (
-                  <option key={s.value} value={s.value}>
+                  <SelectItem key={s.value} value={s.value}>
                     {s.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-                strokeWidth={1.8}
-              />
-            </div>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </section>
@@ -161,7 +176,7 @@ function DirectoryInner() {
         <div className="mx-auto w-full max-w-[1320px] px-6 md:px-8">
           <Eyebrow className="mb-6">Ils sont déjà mentors</Eyebrow>
           {error && (
-            <div className="mb-6 rounded-xl border border-error/30 bg-error/[0.08] px-4 py-3 text-sm text-error">
+            <div className="mb-6 rounded-xl border border-error/30 bg-error/8 px-4 py-3 text-sm text-error">
               {error}
             </div>
           )}
