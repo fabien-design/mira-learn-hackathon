@@ -245,8 +245,9 @@ async def review_application(
             mc.status = "rejected"
             mc.rejection_reason = d.rejection_reason or "Class refusée par l'admin"
         else:
-            mc.status = "validated_draft"
+            mc.status = "published" # should be "validated_draft" but we want to publish asap for demo, needs adjustment with group b later
             mc.validated_at = now
+            mc.published_at = now
 
     await db.flush()
     await db.refresh(instance)

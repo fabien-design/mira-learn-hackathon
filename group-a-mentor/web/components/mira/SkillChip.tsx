@@ -13,7 +13,7 @@ export function SkillChip({ label, primary, validated, className }: SkillChipPro
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.75 text-[13.5px] font-medium",
         primary
           ? "bg-sage-soft text-[#2D4A1F]"
           : "bg-beige-deep text-charcoal",
