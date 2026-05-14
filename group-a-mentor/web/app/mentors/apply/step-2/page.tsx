@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Link2, PenLine, Upload } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { MethodCard } from "@/components/mira/MethodCard";
 import type { CVImport, MentorApplication } from "@/types/mentor";
 
@@ -19,7 +20,6 @@ export default function Step2Page() {
   const [application, setApplication] = useState<MentorApplication | null>(null);
   const [method, setMethod] = useState<Method | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -36,21 +36,20 @@ export default function Step2Page() {
         }
         setApplication(data);
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."));
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."));
   }, [router]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setError(null);
     try {
       const form = new FormData();
       form.append("file", file);
       const cv = await apiClient.postForm<CVImport>("/v1/mentors/applications/me/cv-imports", form);
       router.push(`/mentors/apply/step-3?cv_import_id=${cv.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Upload échoué.");
+      toast.error(err instanceof ApiError ? err.message : "Upload échoué.");
       setUploading(false);
     }
   }
@@ -70,8 +69,6 @@ export default function Step2Page() {
         }
         subtitle="Mira AI peut pré-remplir ton profil à partir de ton CV. Sinon, écris-le toi-même."
       />
-      <ErrorBanner message={error} />
-
       <div className="grid gap-4 md:grid-cols-3">
         <MethodCard
           disabled

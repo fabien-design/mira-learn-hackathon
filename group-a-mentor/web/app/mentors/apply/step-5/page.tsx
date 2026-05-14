@@ -3,12 +3,13 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
 import { ChipChoice } from "@/components/wizard/ChipChoice";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { FieldRow } from "@/components/wizard/FieldRow";
 import { Input } from "@/components/ui/input";
 import type {
@@ -71,7 +72,6 @@ function Step5Inner() {
   const [format, setFormat] = useState<ClassFormat>("both");
   const [cities, setCities] = useState<TargetCity[]>([]);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!classId) {
@@ -95,7 +95,7 @@ function Step5Inner() {
         setFormat(cls.format_envisaged || "both");
         setCities(cls.target_cities ?? []);
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."));
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."));
   }, [classId, router]);
 
   function toggleCity(c: TargetCity) {
@@ -109,7 +109,6 @@ function Step5Inner() {
   async function handleContinue() {
     if (!classId) return;
     setSaving(true);
-    setError(null);
     try {
       await apiClient.patch(`/v1/mentors/applications/me/classes/${classId}`, {
         title: title.trim(),
@@ -122,7 +121,7 @@ function Step5Inner() {
       });
       router.push(`/mentors/apply/step-6?class_id=${classId}`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
       setSaving(false);
     }
   }
@@ -143,8 +142,6 @@ function Step5Inner() {
         }
         subtitle="Titre, durées, rythme et lieux — tu peux tout ajuster tant que la candidature est modifiable."
       />
-      <ErrorBanner message={error} />
-
       <FieldRow label="Titre de la Mira Class" hint="200 caractères max. Visible par les nomades une fois publiée.">
         <Input
           value={title}

@@ -3,11 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { ExperienceEditor } from "@/components/wizard/ExperienceEditor";
 import { FieldRow } from "@/components/wizard/FieldRow";
 import { PickedSkill, SkillPicker } from "@/components/wizard/SkillPicker";
@@ -72,7 +73,6 @@ function Step3Inner() {
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -107,7 +107,7 @@ function Step3Inner() {
           })),
         });
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur réseau."));
+      .catch((e) => toast.error(e instanceof ApiError ? e.message : "Erreur réseau."));
   }, [router]);
 
   useEffect(() => {
@@ -132,7 +132,7 @@ function Step3Inner() {
             );
           } catch (e) {
             if (!cancelled) {
-              setError(e instanceof ApiError ? e.message : "Extraction CV échouée.");
+              toast.error(e instanceof ApiError ? e.message : "Extraction CV échouée.");
               setCv(current);
               setCvBusy(false);
             }
@@ -147,7 +147,7 @@ function Step3Inner() {
           await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
           if (cancelled) return;
           if (Date.now() - started > MAX_POLL_MS) {
-            setError("Extraction trop longue — réessaie plus tard.");
+            toast.error("Extraction trop longue — réessaie plus tard.");
             break;
           }
           try {
@@ -157,7 +157,7 @@ function Step3Inner() {
             if (!cancelled) setCv(current);
           } catch (e) {
             if (!cancelled) {
-              setError(e instanceof ApiError ? e.message : "Polling CV échoué.");
+              toast.error(e instanceof ApiError ? e.message : "Polling CV échoué.");
             }
             break;
           }
@@ -210,7 +210,7 @@ function Step3Inner() {
       }));
       router.replace("/mentors/apply/step-3");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Validation CV échouée.");
+      toast.error(e instanceof ApiError ? e.message : "Validation CV échouée.");
     }
   }
 
@@ -222,7 +222,6 @@ function Step3Inner() {
   async function handleContinue() {
     if (!canContinue || saving) return;
     setSaving(true);
-    setError(null);
     try {
       await apiClient.patch("/v1/mentors/applications/me/profile", {
         bio: form.bio,
@@ -244,7 +243,7 @@ function Step3Inner() {
       });
       router.push("/mentors/apply/step-4");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
+      toast.error(e instanceof ApiError ? e.message : "Sauvegarde impossible.");
       setSaving(false);
     }
   }
@@ -259,8 +258,6 @@ function Step3Inner() {
           </>
         }
       />
-      <ErrorBanner message={error} />
-
       {cvImportId && (
         <CvIngestionPanel
           cv={cv}

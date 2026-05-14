@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, Star, X } from "lucide-react";
+import { toast } from "sonner";
 
 import type { Skill, SkillLevel } from "@/types/mentor";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,8 @@ export function SkillPicker({
         { skill_id: newSkill.id, level: "advanced", is_primary: false, validated_via_cv_import: false },
       ]);
       setSearch("");
+    } catch (err) {
+      toast.error("Impossible de créer le skill. Réessaie.");
     } finally {
       setCreating(false);
     }

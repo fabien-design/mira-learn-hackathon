@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
     <html lang="fr" className={`${manrope.variable} ${playfair.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

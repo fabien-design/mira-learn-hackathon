@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { toast } from "sonner";
+
 import { ApiError, apiClient } from "@/lib/api-client";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { WizardStepHeader } from "@/components/wizard/WizardStepHeader";
 import { ChipChoice } from "@/components/wizard/ChipChoice";
-import { ErrorBanner } from "@/components/wizard/ErrorBanner";
 import { FieldRow } from "@/components/wizard/FieldRow";
 import { Input } from "@/components/ui/input";
 import type { MentorApplication } from "@/types/mentor";
@@ -81,7 +82,6 @@ export default function Step1Page() {
   const [existing, setExisting] = useState<MentorApplication | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const isValid =
     firstName.trim().length > 0 &&
@@ -111,7 +111,6 @@ export default function Step1Page() {
   async function handleSubmit() {
     if (!isValid || saving) return;
     setSaving(true);
-    setError(null);
     const payload = {
       first_name: firstName.trim(),
       last_name: lastName.trim(),
@@ -126,7 +125,7 @@ export default function Step1Page() {
       }
       router.push("/mentors/apply/step-2");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erreur réseau.");
+      toast.error(err instanceof ApiError ? err.message : "Erreur réseau.");
       setSaving(false);
     }
   }
@@ -150,8 +149,6 @@ export default function Step1Page() {
         }
         subtitle="On ne te demande que l'essentiel. Le reste arrive après."
       />
-      <ErrorBanner message={error} />
-
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FieldRow label="Prénom">
           <Input

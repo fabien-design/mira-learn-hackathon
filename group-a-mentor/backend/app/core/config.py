@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_DEFAULT_MODEL: str = "llama3.2"
 
+    # Debug mode — active debug file dumps (e.g. CV extraction raw text + LLM prompt)
+    # Set DEBUG=true in .env to enable. Never enable in staging/production.
+    DEBUG: bool = False
+
     # CV uploads (disque local pendant hackathon ; URL servie sous /uploads)
     UPLOAD_DIR: str = "./uploads"
 
