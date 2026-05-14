@@ -99,28 +99,26 @@ export default function MentorDetailPage() {
               </div>
               <div className="flex flex-col gap-2.5 self-stretch justify-center">
                 {mentor.linkedin_url && (
-                  <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
-                    <MiraButton
-                      variant="secondary"
-                      size="sm"
-                      className="w-52"
-                      leadingIcon={<Link2 className="h-4 w-4" strokeWidth={1.8} />}
-                    >
-                      LinkedIn
-                    </MiraButton>
-                  </a>
+                  <MiraButton
+                    variant="secondary"
+                    size="sm"
+                    className="w-52"
+                    leadingIcon={<Link2 className="h-4 w-4" strokeWidth={1.8} />}
+                    onClick={() => window.open(mentor.linkedin_url!, "_blank", "noopener,noreferrer")}
+                  >
+                    LinkedIn
+                  </MiraButton>
                 )}
                 {mentor.website_url && (
-                  <a href={mentor.website_url} target="_blank" rel="noopener noreferrer">
-                    <MiraButton
-                      variant="secondary"
-                      size="sm"
-                      className="w-52"
-                      leadingIcon={<ExternalLink className="h-4 w-4" strokeWidth={1.8} />}
-                    >
-                      {mentor.website_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                    </MiraButton>
-                  </a>
+                  <MiraButton
+                    variant="secondary"
+                    size="sm"
+                    className="w-52"
+                    leadingIcon={<ExternalLink className="h-4 w-4" strokeWidth={1.8} />}
+                    onClick={() => window.open(mentor.website_url!, "_blank", "noopener,noreferrer")}
+                  >
+                    {mentor.website_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </MiraButton>
                 )}
               </div>
             </section>
