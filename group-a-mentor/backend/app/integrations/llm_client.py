@@ -150,16 +150,17 @@ class LLMClient:
                 data = resp.json()
             except httpx.HTTPStatusError as exc:
                 elapsed = time.monotonic() - started
+                body = exc.response.text[:500]
                 logger.error(
                     "LLM ✗ openrouter status=%s elapsed=%.1fs body=%s",
                     exc.response.status_code,
                     elapsed,
-                    exc.response.text[:500],
+                    body,
                 )
                 raise AppException(
-                    message="LLM provider error",
+                    message=f"LLM provider error ({exc.response.status_code}): {body}",
                     status_code=502,
-                    data={"provider": "openrouter", "provider_status": exc.response.status_code},
+                    data={"provider": "openrouter", "provider_status": exc.response.status_code, "detail": body},
                 ) from exc
             except httpx.TimeoutException as exc:
                 elapsed = time.monotonic() - started
@@ -179,6 +180,29 @@ class LLMClient:
                 ) from exc
 
         elapsed = time.monotonic() - started
+        logger.debug("LLM openrouter raw response: %s", str(data)[:1000])
+
+        # WHY: OpenRouter returns {"error": {...}} with HTTP 200 for some failures
+        # (rate limits, model unavailable, quota exceeded) — raise_for_status() misses these.
+        if "error" in data:
+            err = data["error"]
+            code = err.get("code") or err.get("status") or 502
+            msg = err.get("message") or str(err)
+            logger.error("LLM ✗ openrouter error in body elapsed=%.1fs: %s", elapsed, msg)
+            raise AppException(
+                message=f"LLM provider error: {msg}",
+                status_code=int(code) if str(code).isdigit() else 502,
+                data={"provider": "openrouter", "error": err},
+            )
+
+        if not data.get("choices"):
+            logger.error("LLM ✗ openrouter no choices in response elapsed=%.1fs body=%s", elapsed, str(data)[:500])
+            raise AppException(
+                message="LLM provider returned empty response",
+                status_code=502,
+                data={"provider": "openrouter", "body": str(data)[:300]},
+            )
+
         usage = data.get("usage", {}) or {}
         choice = data["choices"][0]["message"]
         content = choice.get("content", "") or ""

@@ -257,6 +257,7 @@ async def extract_sync(
         llm_raw = response["content"]
         debug_path.write_text(
             f"=== RAW TEXT ({len(text)} chars) ===\n{text}\n\n"
+            f"=== PROMPT SENT TO LLM ===\n{prompt}\n\n"
             f"=== LLM RAW RESPONSE ===\n{llm_raw}\n",
             encoding="utf-8", errors="replace",
         )

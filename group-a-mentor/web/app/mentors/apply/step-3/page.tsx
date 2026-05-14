@@ -125,6 +125,7 @@ function Step3Inner() {
         );
         // Kick off extraction asynchronously if not started yet
         if (current.status === "uploaded" || current.status === "failed") {
+          if (cancelled) return;
           try {
             current = await apiClient.post<CVImport>(
               `/v1/mentors/applications/me/cv-imports/${cvImportId}/extract`,
