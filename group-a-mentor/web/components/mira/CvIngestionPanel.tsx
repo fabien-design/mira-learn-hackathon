@@ -57,6 +57,7 @@ export function CvIngestionPanel({
 
   const experiences = cv.extracted_experiences_raw ?? [];
   const skills = cv.extracted_skills_raw ?? [];
+  const profile = cv.extracted_profile_raw;
 
   return (
     <div className="mt-6 rounded-2xl border border-rule bg-card p-5">
@@ -91,6 +92,38 @@ export function CvIngestionPanel({
           </div>
         </div>
       </div>
+
+      {profile && (profile.bio || profile.linkedin_url || profile.instagram_url || profile.website_url) && (
+        <div className="mt-4 border-t border-rule pt-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Profil & réseaux
+          </div>
+          {profile.bio && (
+            <p className="mt-2 text-sm text-charcoal leading-relaxed line-clamp-3">{profile.bio}</p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-3">
+            {profile.linkedin_url && (
+              <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-mira-red hover:underline">
+                LinkedIn
+              </a>
+            )}
+            {profile.instagram_url && (
+              <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-mira-red hover:underline">
+                Instagram
+              </a>
+            )}
+            {profile.website_url && (
+              <a href={profile.website_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-mira-red hover:underline">
+                Site web
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mt-5 flex flex-wrap gap-2">
         <MiraButton onClick={onConfirm}>Confirmer et préremplir</MiraButton>
         <MiraButton variant="secondary" onClick={onDiscard}>

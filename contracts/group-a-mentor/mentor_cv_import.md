@@ -75,7 +75,7 @@ CVSourceType = Literal["pdf", "linkedin_url", "manual_paste"]
 class ExtractedExperience(BaseModel):
     role: str
     company: str
-    start_year: int
+    start_year: Optional[int] = None
     end_year: Optional[int] = None
     description: str = ""
 

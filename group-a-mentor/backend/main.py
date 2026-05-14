@@ -30,9 +30,11 @@ from app.core.db import close_db, init_db
 from app.core.exceptions import AppException
 from app.core.responses import error_response, fail_response
 
+
+# Configure logging with handler for console output
 logging.basicConfig(
     level=settings.LOG_LEVEL,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 

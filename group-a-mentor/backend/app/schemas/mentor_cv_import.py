@@ -8,10 +8,17 @@ CVSourceType = Literal["pdf", "linkedin_url", "manual_paste"]
 CVImportStatus = Literal["uploaded", "extracting", "extracted", "validated", "failed"]
 
 
+class ExtractedProfile(BaseModel):
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    website_url: Optional[str] = None
+
+
 class ExtractedExperience(BaseModel):
     role: str
     company: str
-    start_year: int
+    start_year: Optional[int] = None
     end_year: Optional[int] = None
     description: str = ""
 
@@ -46,6 +53,7 @@ class MentorCVImportRead(BaseModel):
     error_message: Optional[str]
     extracted_experiences_raw: Optional[list[ExtractedExperience]]
     extracted_skills_raw: Optional[list[ExtractedSkill]]
+    extracted_profile_raw: Optional[ExtractedProfile]
     validated_experiences: Optional[list[ExtractedExperience]]
     validated_skills: Optional[list[ExtractedSkill]]
     extracted_at: Optional[datetime]

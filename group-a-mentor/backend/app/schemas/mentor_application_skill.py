@@ -10,6 +10,7 @@ SkillLevel = Literal["intermediate", "advanced", "expert"]
 class MentorApplicationSkillBase(BaseModel):
     skill_id: str
     level: SkillLevel
+    is_primary: bool = False
     self_declared: bool = True
     validated_via_cv_import: bool = False
 

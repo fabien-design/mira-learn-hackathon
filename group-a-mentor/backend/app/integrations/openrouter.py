@@ -81,13 +81,24 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """Wrapper minimaliste OpenRouter (API compatible OpenAI Chat Completions)."""
+    """Wrapper LLM — dispatche vers Ollama (local) ou OpenRouter selon LLM_PROVIDER."""
 
-    BASE_URL = "https://openrouter.ai/api/v1"
-    DEFAULT_TIMEOUT = 60.0
+    DEFAULT_TIMEOUT = 120.0
 
-    def __init__(self, api_key: str | None = None) -> None:
-        self.api_key = api_key or settings.OPENROUTER_API_KEY
+    def __init__(self) -> None:
+        if settings.LLM_PROVIDER == "ollama":
+            self._base_url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/v1"
+            self._default_model = settings.OLLAMA_DEFAULT_MODEL
+            self._headers: dict[str, str] = {"Content-Type": "application/json"}
+        else:
+            self._base_url = "https://openrouter.ai/api/v1"
+            self._default_model = settings.OPENROUTER_DEFAULT_MODEL
+            self._headers = {
+                "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://hello-mira.com",
+                "X-Title": settings.SERVICE_NAME,
+            }
 
     async def complete(
         self,
@@ -103,7 +114,7 @@ class LLMClient:
         Retour : dict `{"content": str, "tool_calls": list, "usage": {...}}`.
         """
         payload: dict[str, Any] = {
-            "model": model or settings.OPENROUTER_DEFAULT_MODEL,
+            "model": model or self._default_model,
             "messages": messages,
             "temperature": temperature,
         }
@@ -117,21 +128,16 @@ class LLMClient:
         async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
             try:
                 response = await client.post(
-                    f"{self.BASE_URL}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                        # Headers recommandés OpenRouter pour identifier l'app
-                        "HTTP-Referer": "https://hello-mira.com",
-                        "X-Title": settings.SERVICE_NAME,
-                    },
+                    f"{self._base_url}/chat/completions",
+                    headers=self._headers,
                     json=payload,
                 )
                 response.raise_for_status()
                 data = response.json()
             except httpx.HTTPStatusError as exc:
                 logger.error(
-                    "OpenRouter call failed: %s — %s",
+                    "LLM call failed (%s): %s — %s",
+                    settings.LLM_PROVIDER,
                     exc.response.status_code,
                     exc.response.text,
                     exc_info=True,
@@ -142,7 +148,7 @@ class LLMClient:
                     data={"provider_status": exc.response.status_code},
                 ) from exc
             except httpx.HTTPError as exc:
-                logger.error("OpenRouter network error", exc_info=True)
+                logger.error("LLM provider unreachable (%s)", settings.LLM_PROVIDER, exc_info=True)
                 raise AppException(
                     message="LLM provider unreachable",
                     status_code=503,

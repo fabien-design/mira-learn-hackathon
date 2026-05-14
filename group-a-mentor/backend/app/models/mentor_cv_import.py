@@ -30,6 +30,7 @@ class MentorCVImport(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
     # Résultats IA
     extracted_experiences_raw: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     extracted_skills_raw: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    extracted_profile_raw: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Données validées par le candidat
     validated_experiences: Mapped[list | None] = mapped_column(JSONB, nullable=True)

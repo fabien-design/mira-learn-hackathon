@@ -51,6 +51,7 @@ export interface ApplicationSkill {
   application_id: string;
   skill_id: string;
   level: SkillLevel;
+  is_primary: boolean;
   self_declared: boolean;
   validated_via_cv_import: boolean;
   created_at: string;
@@ -115,6 +116,7 @@ export interface CVImport {
   error_message: string | null;
   extracted_experiences_raw: ProfessionalExperience[] | null;
   extracted_skills_raw: ExtractedSkill[] | null;
+  extracted_profile_raw: { bio: string | null; linkedin_url: string | null; instagram_url: string | null; website_url: string | null } | null;
   validated_experiences: ProfessionalExperience[] | null;
   validated_skills: ExtractedSkill[] | null;
   extracted_at: string | null;
