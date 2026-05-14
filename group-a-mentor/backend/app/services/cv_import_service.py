@@ -403,11 +403,15 @@ def _normalize_experiences(raw: list) -> list[dict]:
         if not isinstance(item, dict):
             continue
         try:
+            start_year_raw = item.get("start_year")
+            start_year = int(start_year_raw) if start_year_raw and int(start_year_raw) != 0 else None
+            end_year_raw = item.get("end_year")
+            end_year = int(end_year_raw) if end_year_raw and int(end_year_raw) != 0 else None
             entry = {
                 "role": str(item.get("role", ""))[:120],
                 "company": str(item.get("company", ""))[:120],
-                "start_year": int(item.get("start_year", 0) or 0) or None,
-                "end_year": int(item["end_year"]) if item.get("end_year") else None,
+                "start_year": start_year,
+                "end_year": end_year,
                 "description": str(item.get("description", ""))[:2000],
             }
         except (TypeError, ValueError):
