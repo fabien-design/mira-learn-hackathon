@@ -18,8 +18,9 @@ MIGRATION HINT (post-hackathon, backbone Hello Mira) :
         app.include_router(v1_router.router)
 """
 import logging
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -27,11 +28,13 @@ from app.api.v1.router import router as v1_router
 from app.core.config import settings
 from app.core.db import close_db, init_db
 from app.core.exceptions import AppException
-from app.core.responses import error_response
+from app.core.responses import error_response, fail_response
 
+
+# Configure logging with handler for console output
 logging.basicConfig(
     level=settings.LOG_LEVEL,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -46,14 +49,33 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
-    # CORS (hackathon : permissif, sera restreint en V1 prod via edge-gateway)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ALLOW_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # CORS (hackathon : permissif, restreint en V1 prod via edge-gateway).
+    # WHY : on combine origin_regex (localhost:* + 127.0.0.1:*) + allow_origins liste
+    # explicite ; allow_credentials=True pour permettre cookies/JWT cross-origin.
+    if settings.ENVIRONMENT == "development":
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001",
+            ],
+            allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            expose_headers=["*"],
+            max_age=3600,
+        )
+    else:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.CORS_ALLOW_ORIGINS,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Exception handler global (réponses JSend)
     @app.exception_handler(AppException)
@@ -61,6 +83,19 @@ def create_app() -> FastAPI:
         return JSONResponse(
             status_code=exc.status_code,
             content=error_response(message=exc.message, data=exc.data),
+        )
+
+    # WHY : ServerErrorMiddleware est plus externe que CORSMiddleware dans la
+    # stack Starlette — les exceptions non catchées produisent des 500 sans
+    # header CORS. Ce handler garantit que TOUTES les erreurs passent par
+    # ExceptionMiddleware → CORSMiddleware avant d'être renvoyées.
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+        message = str(exc) if settings.ENVIRONMENT == "development" else "Internal server error"
+        return JSONResponse(
+            status_code=500,
+            content=error_response(message=message),
         )
 
     # Lifespan
@@ -73,6 +108,9 @@ def create_app() -> FastAPI:
     async def on_shutdown() -> None:
         logger.info("Shutting down %s", settings.SERVICE_NAME)
         await close_db()
+
+    upload_dir = Path(settings.UPLOAD_DIR)
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Routes
     app.include_router(v1_router, prefix="/v1")

@@ -19,3 +19,11 @@ alembic>=1.13.0
 # Auth (Supabase JWT JWKS)
 python-jose[cryptography]>=3.3.0
 httpx>=0.26.0
+
+# CV import (PDF parsing + multipart upload + slug)
+pymupdf4llm>=0.0.17
+python-multipart>=0.0.9
+python-slugify>=8.0.0
+
+# LLM — lib officielle Ollama (async, gestion host Windows)
+ollama>=0.4.0

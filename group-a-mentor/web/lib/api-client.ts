@@ -35,6 +35,11 @@ import { getAccessToken } from "@/lib/supabase";
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/** Base URL du backend FastAPI (utile pour les requêtes multipart custom). */
+export function getApiUrl(): string {
+  return API_URL;
+}
+
 /** Réponse JSend standard depuis le backend. */
 export type JSendResponse<T = unknown> = {
   status: "success" | "fail" | "error";
@@ -55,7 +60,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -98,9 +103,48 @@ async function request<T>(
   return payload.data;
 }
 
+async function requestForm<T>(path: string, form: FormData): Promise<T> {
+  const token = await getAccessToken();
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+
+  let payload: JSendResponse<T> | null = null;
+  try {
+    payload = (await response.json()) as JSendResponse<T>;
+  } catch {
+    // non-JSON response
+  }
+
+  if (!response.ok) {
+    const message = payload?.message ?? `HTTP ${response.status} on POST ${path}`;
+    throw new ApiError(message, response.status, payload?.data ?? null);
+  }
+
+  if (!payload) {
+    throw new ApiError(`Invalid JSON response on POST ${path}`, response.status);
+  }
+
+  if (payload.status === "error" || payload.status === "fail") {
+    throw new ApiError(payload.message ?? "Unknown error", response.status, payload.data);
+  }
+
+  return payload.data;
+}
+
 export const apiClient = {
   get: <T = unknown>(path: string) => request<T>("GET", path),
   post: <T = unknown>(path: string, body?: unknown) => request<T>("POST", path, body),
+  postForm: <T = unknown>(path: string, form: FormData) => requestForm<T>(path, form),
   patch: <T = unknown>(path: string, body?: unknown) => request<T>("PATCH", path, body),
+  put: <T = unknown>(path: string, body?: unknown) => request<T>("PUT", path, body),
   delete: <T = unknown>(path: string) => request<T>("DELETE", path),
 };

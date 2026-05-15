@@ -27,3 +27,11 @@ build/
 # Logs
 *.log
 .local/
+
+# Uploaded files (CV PDFs stored locally — keep .gitkeep)
+group-a-mentor/backend/uploads/*.pdf
+group-a-mentor/backend/uploads/*.PDF
+group-a-mentor/backend/uploads/debug_*.txt
+
+# Process pids (make up/down)
+.pids/

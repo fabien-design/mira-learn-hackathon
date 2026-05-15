@@ -1,58 +1,270 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /**
- * Variables CSS — palette Mira officielle.
+ * Mira Learn — tokens design system (cf. design-system.md).
  *
- * Valeurs prises depuis `fronts/book-web/app/globals.css` (qui hérite de
- * `@hlmr-travel/ui-public/globals.css`). Reproduites en dur ici parce que
- * les groupes hackathon n'ont pas accès au package privé `@hlmr-travel/ui-public`.
+ * shadcn vars (`--primary`, `--background`, etc.) sont remappées vers la palette Mira.
+ * Pour utiliser depuis du CSS direct : `var(--mira-red)`, `var(--charcoal)`, ...
+ * Pour utiliser depuis Tailwind v4 : `bg-primary`, `text-foreground`, `border-border`...
  *
- * Aligned with hello-mira.com Design Authority.
+ * Mira est LIGHT uniquement — `.dark` est aliasé au mode clair pour neutraliser
+ * `prefers-color-scheme: dark` (pas de palette sombre validée).
  *
- * MIGRATION HINT (post-hackathon) :
- *   Remplacer ce bloc par `@import "@hlmr-travel/ui-public/globals.css";`
- *   + `@source` ligne pour les composants du design system.
+ * Polices : `--font-sans` (Manrope) et `--font-serif` (Playfair Display) sont définies
+ * par next/font dans `app/layout.tsx` directement sur `<html>`.
  */
-@theme inline {
-  --color-background: #efeae5;          /* warmBeige Mira */
-  --color-foreground: #1D1D1B;          /* charcoal Mira */
-  --color-primary: #E6332A;             /* Mira RED — couleur principale brand */
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f3f4f6;
-  --color-secondary-foreground: #1D1D1B;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-accent: #f3f4f6;
-  --color-accent-foreground: #1D1D1B;
-  --color-card: #ffffff;
-  --color-card-foreground: #1D1D1B;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #E6332A;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #1D1D1B;
-
-  /* Polices Mira — chargées via next/font/google dans app/layout.tsx */
-  --font-sans: var(--font-manrope, "Manrope"), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair, "Playfair Display"), Georgia, serif;
-}
-
-/* Alias variables raw (pour le CSS qui utilise var(--primary) directement) */
 :root {
-  --background: var(--color-background);
-  --foreground: var(--color-foreground);
-  --primary: var(--color-primary);
-  --primary-foreground: var(--color-primary-foreground);
-  --muted: var(--color-muted);
-  --muted-foreground: var(--color-muted-foreground);
-  --border: var(--color-border);
+  /* ── Palette Mira (semantic) ───────────────────────────────────── */
+  --mira-red: #E6332A;
+  --mira-red-hover: #FF4D42;
+  --warm-beige: #EFEAE5;
+  --beige-deep: #E2DCD3;
+  --charcoal: #1D1D1B;
+  --muted-text: #888888;
+  --muted-soft: #B6B0A6;
+  --rule: #E5E7EB;
+  --card-bg: #FFFFFF;
+  --success: #16A34A;
+  --error: #EF4444;
+  --gold: #D4A853;
+  --sage-soft: #D6E3D0;
+  --pastel-sage: #A8C5A2;
+
+  /* Status pill tints */
+  --status-submitted-bg: #FEF3C7;
+  --status-submitted-fg: #92400E;
+  --status-inreview-bg: #DBEAFE;
+  --status-inreview-fg: #1E40AF;
+  --status-validated-bg: #DCFCE7;
+  --status-validated-fg: #15803D;
+  --status-rejected-bg: #FEE2E2;
+  --status-rejected-fg: #B91C1C;
+  --status-draft-bg: #F3F4F6;
+  --status-draft-fg: #4B5563;
+
+  /* ── shadcn vars remappées vers Mira ───────────────────────────── */
+  --background: var(--warm-beige);
+  --foreground: var(--charcoal);
+  --card: var(--card-bg);
+  --card-foreground: var(--charcoal);
+  --popover: var(--card-bg);
+  --popover-foreground: var(--charcoal);
+  --primary: var(--mira-red);
+  --primary-foreground: #ffffff;
+  --secondary: var(--card-bg);
+  --secondary-foreground: var(--charcoal);
+  --muted: var(--beige-deep);
+  --muted-foreground: var(--muted-text);
+  --accent: var(--beige-deep);
+  --accent-foreground: var(--charcoal);
+  --destructive: var(--error);
+  --destructive-foreground: #ffffff;
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--mira-red);
+
+  --chart-1: var(--mira-red);
+  --chart-2: var(--gold);
+  --chart-3: var(--pastel-sage);
+  --chart-4: var(--muted-soft);
+  --chart-5: var(--charcoal);
+
+  --sidebar: var(--card-bg);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--mira-red);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--warm-beige);
+  --sidebar-accent-foreground: var(--charcoal);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--mira-red);
+
+  --radius: 12px;
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
-  color-scheme: light;
+/* Mira est light uniquement — neutralise le dark mode système */
+.dark {
+  --background: var(--warm-beige);
+  --foreground: var(--charcoal);
+  --card: var(--card-bg);
+  --card-foreground: var(--charcoal);
+  --popover: var(--card-bg);
+  --popover-foreground: var(--charcoal);
+  --primary: var(--mira-red);
+  --primary-foreground: #ffffff;
+  --secondary: var(--card-bg);
+  --secondary-foreground: var(--charcoal);
+  --muted: var(--beige-deep);
+  --muted-foreground: var(--muted-text);
+  --accent: var(--beige-deep);
+  --accent-foreground: var(--charcoal);
+  --destructive: var(--error);
+  --destructive-foreground: #ffffff;
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--mira-red);
+  --sidebar: var(--card-bg);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--mira-red);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--warm-beige);
+  --sidebar-accent-foreground: var(--charcoal);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--mira-red);
+}
+
+/* Tailwind v4 @theme inline — expose les Mira vars aux utilitaires (bg-*, text-*…) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-mira-red: var(--mira-red);
+  --color-mira-red-hover: var(--mira-red-hover);
+  --color-warm-beige: var(--warm-beige);
+  --color-beige-deep: var(--beige-deep);
+  --color-charcoal: var(--charcoal);
+  --color-muted-soft: var(--muted-soft);
+  --color-rule: var(--rule);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-gold: var(--gold);
+  --color-sage-soft: var(--sage-soft);
+  --color-pastel-sage: var(--pastel-sage);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* WHY: Tailwind v4 changed button cursor to `default` (browser spec). Restore pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    color-scheme: light;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans, "Manrope", ui-sans-serif, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────── */
+/* Mira utility helpers (template parity)                              */
+/* ────────────────────────────────────────────────────────────────── */
+
+@layer components {
+  .mira-shell {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 1200px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  @media (min-width: 768px) {
+    .mira-shell {
+      padding-left: 32px;
+      padding-right: 32px;
+    }
+  }
+
+  .mira-shell-wide {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 1320px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  @media (min-width: 768px) {
+    .mira-shell-wide {
+      padding-left: 32px;
+      padding-right: 32px;
+    }
+  }
+
+  .font-serif-italic {
+    font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted-text);
+  }
+
+  .hairline {
+    height: 1px;
+    background: var(--rule);
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  }
+}
+
+/* Skeleton pulse (template parity) */
+.sk-line {
+  background: linear-gradient(
+    90deg,
+    var(--beige-deep) 0%,
+    #ECE6DE 50%,
+    var(--beige-deep) 100%
+  );
+  background-size: 200% 100%;
+  animation: skpulse 1.4s ease-in-out infinite;
+  border-radius: 9999px;
+}
+@keyframes skpulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

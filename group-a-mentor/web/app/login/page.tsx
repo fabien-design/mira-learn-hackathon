@@ -2,20 +2,16 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/Button";
+import { MiraLogo } from "@/components/mira/Logo";
+import { MiraButton } from "@/components/mira/MiraButton";
+import { MiraCard } from "@/components/mira/MiraCard";
+import { SectionTitle } from "@/components/mira/SectionTitle";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-/**
- * Page de login email/password.
- *
- * Le pattern hackathon utilise Supabase Auth via localStorage (cohérent book-web).
- *
- * MIGRATION HINT (post-hackathon) :
- *   Le login en prod Hello Mira passe par `idp-front` (Identity Provider central)
- *   qui retourne un `redirect_token` consommé par auth-api `/v1/auth/exchange`.
- *   Pas de login email/password direct dans les apps. Voir `fronts/idp-front/`.
- */
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -27,67 +23,66 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setError(null);
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
+    const { error: e } = await supabase.auth.signInWithPassword({ email, password });
+    if (e) {
+      setError(e.message);
       setLoading(false);
       return;
     }
-
-    router.push("/me");
+    router.push("/");
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
-      >
-        <h1 className="text-2xl font-bold">Se connecter</h1>
-
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium">
-            Mot de passe
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
-          />
-        </div>
-
-        {error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-        )}
-
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Connexion..." : "Se connecter"}
-        </Button>
-
-        <p className="text-xs text-gray-500">
-          Comptes test : <code>mentor1@hackathon.test</code> /{" "}
-          <code>Hackathon2026!</code>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-12">
+      <Link href="/" className="mb-8">
+        <MiraLogo />
+      </Link>
+      <MiraCard className="w-full max-w-md">
+        <SectionTitle as="h1" size="page" className="text-center">
+          Se connecter
+        </SectionTitle>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          Mira ouvre les portes aux candidats mentors et aux admins.
         </p>
-      </form>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              className="h-11 rounded-xl border-rule bg-card text-base focus-visible:border-mira-red focus-visible:ring-mira-red/15"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Mot de passe</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="h-11 rounded-xl border-rule bg-card text-base focus-visible:border-mira-red focus-visible:ring-mira-red/15"
+            />
+          </div>
+          {error && (
+            <p className="rounded-xl bg-error/8 px-3.5 py-2.5 text-sm text-error">
+              {error}
+            </p>
+          )}
+          <MiraButton type="submit" disabled={loading} className="w-full">
+            {loading ? "Connexion…" : "Se connecter"}
+          </MiraButton>
+          <p className="text-center text-[12px] text-muted-foreground">
+            Comptes test : <code>emma.rossi@hackathon.test</code> /{" "}
+            <code>Hackathon2026!</code>
+          </p>
+        </form>
+      </MiraCard>
     </main>
   );
 }

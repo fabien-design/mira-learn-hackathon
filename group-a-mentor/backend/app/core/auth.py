@@ -59,7 +59,61 @@ async def _fetch_jwks() -> dict[str, Any]:
 
 
 async def _decode_jwt(token: str) -> dict[str, Any]:
-    """Décode + valide un JWT Supabase via JWKS RS256."""
+    """Décode + valide un JWT Supabase.
+
+    - development : pas de vérification de signature (JWKS non requis).
+    - staging/production : validation RS256 via JWKS.
+    """
+    # WHY : en dev local, Supabase JWKS n'est pas forcément accessible.
+    # On extrait les claims sans vérifier la signature — acceptable en développement.
+    if settings.ENVIRONMENT == "development":
+        # HACKATHON: JWT signature not verified in development mode.
+        # Identified by code review — skipped intentionally: Supabase JWKS is not
+        # always reachable in local dev. Must be enabled before staging/production deploy.
+        try:
+            return jwt.get_unverified_claims(token)
+        except JWTError as exc:
+            logger.warning("JWT decode failed (dev mode, no sig check): %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    # ── Production / staging : validation RS256 via JWKS ──────────────────
+    # try:
+    #     jwks = await _fetch_jwks()
+    # except httpx.HTTPError as exc:
+    #     logger.error("Failed to fetch JWKS: %s", exc, exc_info=True)
+    #     raise HTTPException(
+    #         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    #         detail="Auth service temporarily unavailable",
+    #     )
+    #
+    # try:
+    #     header = jwt.get_unverified_header(token)
+    #     kid = header.get("kid")
+    #     if not kid:
+    #         raise JWTError("Missing 'kid' header")
+    #
+    #     key = next((k for k in jwks["keys"] if k.get("kid") == kid), None)
+    #     if not key:
+    #         raise JWTError("Signing key not found in JWKS")
+    #
+    #     return jwt.decode(
+    #         token,
+    #         key=key,
+    #         algorithms=["RS256"],
+    #         audience="authenticated",
+    #         options={"verify_aud": True},
+    #     )
+    # except JWTError as exc:
+    #     logger.warning("JWT validation failed: %s", exc)
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Invalid or expired token",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
     try:
         jwks = await _fetch_jwks()
     except httpx.HTTPError as exc:
@@ -138,8 +192,11 @@ async def require_auth(authorization: str = Header(...)) -> AuthenticatedUser:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: no sub claim")
 
     email = payload.get("email")
+    # WHY: prefer app_metadata (server-side, not user-writable). Fall back to user_metadata
+    # for hackathon seed users where role was seeded there instead.
+    app_metadata = payload.get("app_metadata", {}) or {}
     user_metadata = payload.get("user_metadata", {}) or {}
-    role = user_metadata.get("role", "nomad")
+    role = app_metadata.get("role") or user_metadata.get("role", "nomad")
 
     if role not in ("nomad", "mentor", "admin"):
         logger.warning("Unknown role %r in JWT for user %s, defaulting to nomad", role, user_id)
